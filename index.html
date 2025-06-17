@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Handgame Events</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="container header-flex">
+      <img src="handgame.jpeg" alt="Handgame Photo" class="header-img">
+      <h1>Local Handgame Events</h1>
+    </div>
+    <nav class="navbar">
+      <ul class="nav-links">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="resources.html">Resources</a></li>
+      </ul>
+        <p>Gathering and sharing upcoming Handgame dates and flyers with the community.</p>
+
+      <div class="submit-container">
+        <a class="submit-button" href="https://docs.google.com/forms/d/e/1FAIpQLSdsfO9J9FjrTWPrjU1psq89ikLejOkUvL07H5KEFegyWwQIMQ/viewform" target="_blank" rel="noopener noreferrer">
+            Submit an Event</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h2>Upcoming Events</h2>
+    <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1rem;">
+      <input type="text" id="search" placeholder="Search" aria-label="Search events">
+     <!-- <button id="clear-search" class="filter-button" type="button">Clear Search</button> -->
+    </div>
+    <div id="event-list"></div>
+  </main>
+
+  <div id="event-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close-button">&times;</span>
+      <h3 id="modal-title"></h3>
+      <p><strong>Date:</strong> <span id="modal-date"></span></p>
+      <p><strong>Location:</strong> <span id="modal-location"></span></p>
+      <p><strong>Tribe/Group:</strong> <span id="modal-tribe"></span></p>
+      <div id="modal-flyer"></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <div class="toggle-container">
+        <button class="toggle-button" onclick="document.body.classList.toggle('light-mode')">Toggle Light/Dark Mode</button>
+      </div>
+      <p>&copy; 2025 HandGame Community | Hosted on GitHub Pages</p>
+      <p>Contact: <a href="mailto:edesoto18@gmail.com">edesoto18@gmail.com</a></p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      document.body.classList.remove('light');
+
+      const modal = document.getElementById("event-modal");
+      const closeModal = document.querySelector(".close-button");
+
+      closeModal.onclick = () => modal.style.display = "none";
+      window.onclick = e => { if (e.target == modal) modal.style.display = "none"; };
+
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') modal.style.display = 'none';
+      });
+    });
+  </script>
+  <button id="back-to-top" title="Back to top">↑ Top</button>
+  <script>
+    // Show/hide the button on scroll
+    window.addEventListener('scroll', () => {
+        const button = document.getElementById('back-to-top');
+        if (window.scrollY > 300) {
+        button.style.display = 'block';
+        } else {
+        button.style.display = 'none';
+        }
+    });
+
+    // Scroll smoothly to top when clicked
+    document.getElementById('back-to-top').addEventListener('click', () => {
+        window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+        });
+    });
+    </script>
+
+</body>
+</html>

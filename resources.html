@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resources - Handgame Events</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="container header-flex">
+      <img src="handgame.jpeg" alt="Handgame Photo" class="header-img">
+      <h1>Handgame Resources</h1>
+      <p>Helpful links to learn, teach, or share Handgame knowledge.</p>
+    </div>
+    <nav class="navbar">
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="resources.html" class="active">Resources</a></li>
+      </ul>
+      <div class="submit-container">
+        <a class="submit-button" href="https://docs.google.com/forms/d/e/1FAIpQLSdsfO9J9FjrTWPrjU1psq89ikLejOkUvL07H5KEFegyWwQIMQ/viewform" target="_blank" rel="noopener noreferrer">
+          Submit an Event
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section>
+      <h2>Getting Started</h2>
+      <ul>
+        <li><a href="https://www.youtube.com/watch?v=6UNpgwM69vQ" target="_blank">Handgame Basics - Video Introduction</a></li>
+        <li><a href="https://www.firstnations.org/publications/traditional-hand-games/" target="_blank">Traditional Handgames (First Nations)</a></li>
+        <li><a href="https://www.nativegames.org/handgame" target="_blank">NativeGames.org Handgame Overview</a></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Printable Rules</h2>
+      <ul>
+        <li><a href="rules.pdf" target="_blank">Basic Handgame Rules [PDF]</a></li>
+        <li><a href="https://www.tribalhandgames.com/rules" target="_blank">Tournament Rules Guide</a></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Learn More</h2>
+      <ul>
+        <li><a href="https://www.nativelanguages.org/handgames.htm" target="_blank">History of Handgames</a></li>
+        <li><a href="https://www.powwows.com/" target="_blank">PowWows.com - Events & Culture</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="toggle-container">
+        <button class="toggle-button" onclick="document.body.classList.toggle('light-mode')">Toggle Light/Dark Mode</button>
+      </div>
+      <p>&copy; 2025 HandGame Community | Hosted on GitHub Pages</p>
+      <p>Contact: <a href="mailto:edesoto18@gmail.com">edesoto18@gmail.com</a></p>
+    </div>
+  </footer>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      document.body.classList.remove('light');
+    });
+  </script>
+  <button id="back-to-top" title="Back to top">↑ Top</button>
+  <script>
+    // Show/hide the button on scroll
+    window.addEventListener('scroll', () => {
+        const button = document.getElementById('back-to-top');
+        if (window.scrollY > 300) {
+        button.style.display = 'block';
+        } else {
+        button.style.display = 'none';
+        }
+    });
+
+    // Scroll smoothly to top when clicked
+    document.getElementById('back-to-top').addEventListener('click', () => {
+        window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+        });
+    });
+    </script>
+</body>
+</html>

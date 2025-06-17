@@ -1,0 +1,446 @@
+/* ==================================================
+   Google Fonts Import
+   ================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap');
+
+/* ==================================================
+   Root Theme and Global Settings
+   ================================================== */
+:root {
+  color-scheme: dark;
+}
+
+/* ==================================================
+   Base Styles for Body and Typography
+   ================================================== */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #121212;
+  color: #e0e0e0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Light mode overrides for base body */
+body.light-mode {
+  background: #ffffff;
+  color: #111;
+}
+
+/* ==================================================
+   Header Styles
+   ================================================== */
+header {
+  background: #1e1e1e;
+  color: white;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  font-family: 'Roboto Slab', serif;
+}
+
+header h1 {
+  font-size: 2.4rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ==================================================
+   Navigation Bar Styles
+   ================================================== */
+.navbar {
+  background-color: #1e1e1e;
+  padding: 0.75rem 1rem;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links li a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.1rem;
+  transition: color 0.2s ease;
+}
+
+.nav-links li a:hover {
+  color: #4dabf7;
+}
+
+/* Light mode overrides for header and navbar */
+body.light-mode header,
+body.light-mode footer,
+body.light-mode .navbar {
+  background: #f0f0f0;
+  color: #111;
+  border-color: #007acc;
+}
+
+body.light-mode .nav-links li a {
+  color: #111;
+}
+
+body.light-mode .nav-links li a:hover {
+  color: #007acc;
+}
+
+/* ==================================================
+   Main Content Container
+   ================================================== */
+main {
+  padding: 1.5rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* ==================================================
+   Search Bar Input
+   ================================================== */
+#search {
+  margin: 1rem auto 2rem auto;
+  padding: 0.75rem;
+  width: 100%;
+  max-width: 600px;
+  display: block;
+  font-size: 1.25rem;
+  border: 2px solid #444;
+  border-radius: 6px;
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+body.light-mode #search {
+  background-color: #ffffff;
+  color: #111;
+  border: 2px solid #aaa;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* ==================================================
+   Event Cards
+   ================================================== */
+.event {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  font-family: 'Roboto Slab', serif;
+}
+
+body.light-mode .event {
+  background: #ffffff;
+  border: 1px solid #bbb;
+  color: #111;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* ==================================================
+   Filter Buttons
+   ================================================== */
+.filter-button {
+  background-color: #2a2a2a;
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  margin: 0.2rem;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #e0e0e0;
+  transition: background 0.2s ease-in-out;
+}
+
+.filter-button:hover {
+  background-color: #007acc;
+  color: #fff;
+}
+
+body.light-mode .filter-button {
+  background-color: #e9e9e9;
+  border: 1px solid #aaa;
+  color: #111;
+}
+
+/* ==================================================
+   Toggle Theme Button
+   ================================================== */
+.toggle-container {
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.toggle-button {
+  background: #007acc;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.toggle-button:hover {
+  background: #005e99;
+}
+
+/* ==================================================
+   Submit Button
+   ================================================== */
+.submit-button {
+  display: inline-block;
+  padding: 0.75em 1.5em;
+  margin-top: 1em;
+  background-color: #007bff;
+  color: #fff;
+  font-weight: bold;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.submit-button:hover,
+.submit-button:focus {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+.submit-button:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+/* ==================================================
+   Footer Styles
+   ================================================== */
+footer {
+  text-align: center;
+  padding: 1rem;
+  background: #1e1e1e;
+  color: white;
+  font-size: 1rem;
+}
+
+body.light-mode footer {
+  background: #f0f0f0;
+  color: #111;
+}
+
+
+/* ==================================================
+   Container Utility Class
+   ================================================== */
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/* ==================================================
+   Clear Search Button
+   ================================================== */
+/*
+  #clear-search {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  margin-left: 0.5rem;
+  border: 1px solid #555;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  height: 2.75rem;
+  vertical-align: middle;
+}
+
+#clear-search:hover {
+  background-color: #007acc;
+  color: #fff;
+  border-color: #007acc;
+}
+
+body.light-mode #clear-search {
+  background-color: #e9e9e9;
+  color: #111;
+  border: 1px solid #aaa;
+}
+
+body.light-mode #clear-search:hover {
+  background-color: #007acc;
+  color: #fff;
+  border-color: #007acc;
+}
+*/
+/* ==================================================
+   Responsive Image Styling for Header
+   ================================================== */
+.header-img {
+  max-width: 100%;
+  width: 300px;
+  height: auto;
+  border-radius: 8px;
+  padding: 0 1rem;
+  display: block;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* ==================================================
+   Flexbox Layout for Header Content
+   ================================================== */
+.header-flex {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: center;
+}
+
+/* Center ul and keep bullets aligned with text */
+main section ul {
+  list-style-position: inside;
+  padding: 0;
+  text-align: center;
+}
+
+main section ul li {
+  margin: 0.5rem 0;
+}
+
+.event p {
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+/* ==================================================
+   Toggle Details Button & Event Details
+   ================================================== */
+.toggle-details-button {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  border: 1px solid #555;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.toggle-details-button:hover {
+  background-color: #007acc;
+  color: #fff;
+}
+
+body.light-mode .toggle-details-button {
+  background-color: #e9e9e9;
+  color: #111;
+  border: 1px solid #aaa;
+}
+
+body.light-mode .toggle-details-button:hover {
+  background-color: #007acc;
+  color: #fff;
+  border-color: #007acc;
+}
+
+.event-details {
+  display: none;
+  margin-top: 0.5rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.5;
+  font-size: 1rem;
+}
+
+.event a {
+  color: #4dabf7;
+  text-decoration: none;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.event a:hover {
+  color: #90caf9;
+  opacity: 0.85;
+  text-decoration: underline;
+}
+
+body.light-mode .event a {
+  color: #007acc;
+}
+
+body.light-mode .event a:hover {
+  color: #005999;
+}
+
+.event img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin-top: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.event img:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+#back-to-top {
+  display: none;
+  position: fixed;
+  bottom: 40px;
+  right: 30px;
+  z-index: 999;
+  background-color: #007acc;
+  color: #fff;
+  border: none;
+  padding: 0.7rem 1rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#back-to-top:hover {
+  background-color: #005e99;
+  transform: translateY(-2px);
+}
+
+body.light-mode #back-to-top {
+  background-color: #007acc;
+  color: #fff;
+}
+
+body.light-mode #back-to-top:hover {
+  background-color: #005999;
+}
+
+mark {
+  background-color: rgb(43, 167, 192);
+  color: #000;
+  padding: 0 2px;
+  border-radius: 3px;
+}
