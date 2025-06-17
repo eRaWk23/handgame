@@ -59,6 +59,40 @@ function render(events, searchTerm = '') {
     const rawDetails = event["Details (optional)"];
     const formattedDetails = rawDetails ? highlightMatch(rawDetails.replace(/\n/g, '<br>'), searchTerm) : '';
 
+    let flyerHTML = '';
+    const allImageExtensions = /\.(jpg|jpeg|png|gif|webp|bmp|tiff|svg)$/i;
+    const driveLink = event["Upload Flyer (optional)"];
+    let previewLink = '';
+    let viewerLink = '';
+
+    if (driveLink && driveLink.includes('drive.google.com')) {
+      const idMatch = driveLink.match(/[-\w]{25,}/);
+      if (idMatch) {
+        const fileId = idMatch[0];
+        previewLink = `https://drive.google.com/uc?export=view&id=${fileId}`;
+        viewerLink = `https://drive.google.com/file/d/${fileId}/view`;
+
+        flyerHTML = `
+          <a href="${viewerLink}" target="_blank">
+            <img src="${previewLink}" alt="Flyer for Event" class="flyer-img" onerror="this.style.display='none'">
+          </a>
+          <p><a href="${viewerLink}" target="_blank" class="flyer-link">📄 View Flyer</a></p>`;
+      }
+    } else if (flyer) {
+      previewLink = flyer;
+      viewerLink = flyer;
+
+      if (allImageExtensions.test(previewLink)) {
+        flyerHTML = `
+          <a href="${viewerLink}" target="_blank">
+            <img src="${previewLink}" alt="Flyer for Event" class="flyer-img" onerror="this.style.display='none'">
+          </a>
+          <p><a href="${viewerLink}" target="_blank" class="flyer-link">📄 View Flyer</a></p>`;
+      } else {
+        flyerHTML = `<p><a href="${viewerLink}" target="_blank" class="flyer-link">📎 View Flyer Link</a></p>`;
+      }
+    }
+
     const eventHTML = `
       <div class="event">
         <h2>${highlightMatch(title, searchTerm)}</h2>
@@ -70,7 +104,7 @@ function render(events, searchTerm = '') {
         </p>
 
         <p><strong>Tribe/Group:</strong> <button class="filter-button" data-filter="${tribe}">${highlightMatch(tribe, searchTerm)}</button></p>
-        ${flyer ? `<a href="${flyer}" target="_blank"><img src="${flyer}" alt="Flyer for Event"></a>` : ''}
+        ${flyerHTML}
         <br>
         ${formattedDetails ? `
         <button class="toggle-details-button">Show Details</button>
@@ -85,8 +119,6 @@ function render(events, searchTerm = '') {
     container.insertAdjacentHTML('beforeend', eventHTML);
   });
 
-
-  // Toggle "Show Details" behavior
   document.querySelectorAll('.toggle-details-button').forEach(button => {
     button.addEventListener('click', () => {
       const detailsDiv = button.nextElementSibling;
@@ -96,7 +128,6 @@ function render(events, searchTerm = '') {
     });
   });
 
-  // Filtering behavior
   document.querySelectorAll('.filter-button').forEach(btn => {
     btn.addEventListener('click', () => {
       const search = document.getElementById('search');
@@ -105,7 +136,6 @@ function render(events, searchTerm = '') {
     });
   });
 
-  // Clear search button
   const clearBtn = document.getElementById('clear-search');
   if (clearBtn) {
     clearBtn.addEventListener('click', () => {
@@ -115,7 +145,6 @@ function render(events, searchTerm = '') {
     });
   }
 
-  // Store past events globally
   window.pastEventsArchive = pastEvents;
 }
 
@@ -147,7 +176,7 @@ async function loadEvents() {
         fuzzyMatch(term, e["End Date"]?.toLowerCase()) ||
         fuzzyMatch(term, e["Details (optional)"]?.toLowerCase())
       );
-        render(filtered, term);
+      render(filtered, term);
     });
 
     setInterval(() => render(events), 60000);
