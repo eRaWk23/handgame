@@ -54,56 +54,62 @@ function render(events, searchTerm = '') {
     const startDate = event["Start Date"];
     const endDate = event["End Date"];
     const location = event["Location"];
-    const tribe = event["Tribe (optional)"];
-    const flyer = event["Flyer Link (optional)"];
+    const tribe = event["Tribe (optional)"] || "Not Available";
+    const flyer = event["Flyer Link (optional)"] || "Not Available";
     const rawDetails = event["Details (optional)"];
     const formattedDetails = rawDetails ? highlightMatch(rawDetails.replace(/\n/g, '<br>'), searchTerm) : '';
 
     let flyerHTML = '';
+    const driveLink = event["Upload Flyer (optional)"]?.trim();
+    const flyerLink = event["Flyer Link (optional)"]?.trim();
     const allImageExtensions = /\.(jpg|jpeg|png|gif|webp|bmp|tiff|svg)$/i;
-    const driveLink = event["Upload Flyer (optional)"];
-    let previewLink = '';
-    let viewerLink = '';
 
+    // Prioritize Google Drive upload
+    let finalLink = '';
+    let previewSrc = '';
+    let isImage = false;
+
+    // Check Google Drive link
     if (driveLink && driveLink.includes('drive.google.com')) {
-      const idMatch = driveLink.match(/[-\w]{25,}/);
-      if (idMatch) {
+    const idMatch = driveLink.match(/[-\w]{25,}/);
+    if (idMatch) {
         const fileId = idMatch[0];
-        previewLink = `https://drive.google.com/uc?export=view&id=${fileId}`;
-        viewerLink = `https://drive.google.com/file/d/${fileId}/view`;
-
-        flyerHTML = `
-          <a href="${viewerLink}" target="_blank">
-            <img src="${previewLink}" alt="Flyer for Event" class="flyer-img" onerror="this.style.display='none'">
-          </a>
-          <p><a href="${viewerLink}" target="_blank" class="flyer-link">📄 View Flyer</a></p>`;
-      }
-    } else if (flyer) {
-      previewLink = flyer;
-      viewerLink = flyer;
-
-      if (allImageExtensions.test(previewLink)) {
-        flyerHTML = `
-          <a href="${viewerLink}" target="_blank">
-            <img src="${previewLink}" alt="Flyer for Event" class="flyer-img" onerror="this.style.display='none'">
-          </a>
-          <p><a href="${viewerLink}" target="_blank" class="flyer-link">📄 View Flyer</a></p>`;
-      } else {
-        flyerHTML = `<p><a href="${viewerLink}" target="_blank" class="flyer-link">📎 View Flyer Link</a></p>`;
-      }
+        finalLink = `https://drive.google.com/file/d/${fileId}/view`;
+        previewSrc = `https://drive.google.com/uc?export=view&id=${fileId}`;
+        isImage = true; // We try to load it as an image and fallback
     }
+    }
+
+    // Else, use Flyer Link if available
+    if (!finalLink && flyerLink) {
+    finalLink = flyerLink;
+    previewSrc = flyerLink;
+    isImage = allImageExtensions.test(flyerLink);
+    }
+
+    // Build the flyer HTML only if something valid exists
+    if (finalLink) {
+    flyerHTML = isImage
+        ? `
+        <a href="${finalLink}" target="_blank">
+            <img src="${previewSrc}" alt="Flyer for Event" class="flyer-img"
+                onerror="this.style.display='none'; this.nextElementSibling?.classList.add('show-error');">
+        </a>
+        <p class="flyer-error" style="display:none; color: red; font-size: 0.9rem;">⚠️ Flyer failed to load.</p>
+        <p><a href="${finalLink}" target="_blank" class="flyer-link">📄 View Flyer</a></p>
+        `
+        : `<p><a href="${finalLink}" target="_blank" class="flyer-link">📎 View Flyer Link</a></p>`;
+    }
+
+
 
     const eventHTML = `
       <div class="event">
         <h2>${highlightMatch(title, searchTerm)}</h2>
         <p><strong>Dates:</strong> ${formatDate(startDate)} ${endDate ? '– ' + formatDate(endDate) : ''}</p>
-        <p><strong>Location:</strong> 
-         <button class="filter-button" data-filter="${location}">${highlightMatch(location, searchTerm)}</button>
-         <br>
-         <a href="https://www.google.com/maps/search/${encodeURIComponent(location)}" target="_blank" style="font-size: 0.95rem;">📍 View on Map</a>
-        </p>
-
-        <p><strong>Tribe/Group:</strong> <button class="filter-button" data-filter="${tribe}">${highlightMatch(tribe, searchTerm)}</button></p>
+        <p><strong>Location:</strong> ${highlightMatch(location, searchTerm)}<br>
+        <a href="https://www.google.com/maps/search/${encodeURIComponent(location)}" target="_blank" style="font-size: 0.95rem;">📍 View on Map</a></p>
+        <p><strong>Tribe/Group:</strong> ${highlightMatch(tribe, searchTerm)}</p>
         ${flyerHTML}
         <br>
         ${formattedDetails ? `
@@ -117,15 +123,6 @@ function render(events, searchTerm = '') {
     `;
 
     container.insertAdjacentHTML('beforeend', eventHTML);
-  });
-
-  document.querySelectorAll('.toggle-details-button').forEach(button => {
-    button.addEventListener('click', () => {
-      const detailsDiv = button.nextElementSibling;
-      const isVisible = detailsDiv.style.display === 'block';
-      detailsDiv.style.display = isVisible ? 'none' : 'block';
-      button.textContent = isVisible ? 'Show Details' : 'Hide Details';
-    });
   });
 
   document.querySelectorAll('.filter-button').forEach(btn => {

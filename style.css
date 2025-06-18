@@ -463,8 +463,12 @@ mark {
 
 .flyer-img {
   max-width: 100%;
-  height: auto;
-  margin-top: 10px;
-  border-radius: 6px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  max-height: 300px;
+  display: block;
+  margin-top: 0.5rem;
+  border-radius: 8px;
+}
+
+.flyer-error.show-error {
+  display: block !important;
 }
