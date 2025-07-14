@@ -120,6 +120,7 @@ function render(events, searchTerm = '') {
         <div class="event-details" style="display: none;">
             <p><strong>Details:</strong><br>${formattedDetails}</p>
         </div>
+        <p class="mobile-details-msg">Full details available on desktop view.</p>
         ` : ''}
         <p class="countdown">⏳ ${renderCountdown(endDate || startDate)}</p>
       </div>
@@ -127,6 +128,24 @@ function render(events, searchTerm = '') {
 
     container.insertAdjacentHTML('beforeend', eventHTML);
   });
+
+  document.querySelectorAll('.toggle-details-button').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const detailsDiv = this.nextElementSibling;
+      if (!detailsDiv || !detailsDiv.classList.contains('event-details')) return;
+
+      if (detailsDiv.style.display === 'block') {
+        detailsDiv.style.display = 'none';
+        this.textContent = 'Show Details';
+      } else {
+        detailsDiv.style.display = 'block';
+        this.textContent = 'Hide Details';
+      }
+    });
+  });
+
+
+
 
   document.querySelectorAll('.filter-button').forEach(btn => {
     btn.addEventListener('click', () => {

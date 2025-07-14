@@ -370,6 +370,11 @@ body.light-mode .toggle-details-button:hover {
   word-wrap: break-word;
   line-height: 1.5;
   font-size: 1rem;
+
+  max-height: none !important;
+  overflow: visible !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .event a {
@@ -529,5 +534,24 @@ mark {
 @media (max-width: 767px) {
   .print-button {
     display: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .toggle-details-button,
+  .event-details {
+    display: none !important;
+  }
+}
+
+.mobile-details-msg {
+  display: none;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+@media (max-width: 767px) {
+  .mobile-details-msg {
+    display: block;
   }
 }
