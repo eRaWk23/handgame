@@ -525,3 +525,9 @@ mark {
   border-radius: 6px;
   cursor: pointer;
 }
+
+@media (max-width: 767px) {
+  .print-button {
+    display: none !important;
+  }
+}

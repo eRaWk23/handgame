@@ -32,7 +32,7 @@
     </div>
     <div id="event-list"></div>
     <div style="text-align: center; margin: 1rem;">
-      <button onclick="window.print()" class="print-button">Printable View</button>
+      <button class="print-button">Printable View</button>
     </div>
   </main>
 
@@ -58,6 +58,22 @@
   </footer>
 
   <script src="script.js"></script>
+
+  <script>
+    const printBtn = document.querySelector('.print-button');
+
+    // Hide the button entirely on small screens (less than 768px wide)
+    if (window.innerWidth < 768) {
+      printBtn.style.display = 'none';
+    } else {
+      printBtn.addEventListener('click', () => {
+        if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+          alert("📄 For best results, switch to Desktop Mode or print from a computer.");
+        }
+        window.print();
+      });
+    }
+  </script>
 
   <!-- 🌞 THEME + MODAL SCRIPT -->
   <script>
