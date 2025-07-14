@@ -53,9 +53,12 @@ function render(events, searchTerm = '') {
     const title = event["Event Title"];
     const startDate = event["Start Date"];
     const endDate = event["End Date"];
-    const location = event["Location"];
-    const tribe = event["Tribe (optional)"] || "Not Available";
-    const flyer = event["Flyer Link (optional)"] || "Not Available";
+    const rawLocation = event["Location"];
+    const location = rawLocation && rawLocation.trim() !== "" ? rawLocation : "Not Available";
+    const rawTribe = event["Tribe (optional)"];
+    const tribe = rawTribe && rawTribe.trim() !== "" ? rawTribe : "Not Available";
+    const rawFlyer = event["Flyer Link (optional)"];
+    const flyer = rawFlyer && rawFlyer.trim() !== "" ? rawFlyer : "Not Available";
     const rawDetails = event["Details (optional)"];
     const formattedDetails = rawDetails ? highlightMatch(rawDetails.replace(/\n/g, '<br>'), searchTerm) : '';
 

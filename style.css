@@ -472,3 +472,56 @@ mark {
 .flyer-error.show-error {
   display: block !important;
 }
+
+/* Hide non-essential elements in print view */
+@media print {
+  header,
+  nav,
+  footer,
+  #search,
+  #back-to-top,
+  .toggle-button,
+  .toggle-details-button,
+  .flyer-img,
+  .flyer-link,
+  .flyer-error,
+  .countdown,
+  .event-details,
+  .submit-container {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+    color: black;
+    font-size: 16pt;
+  }
+
+  .event {
+    border: none;
+    box-shadow: none;
+    margin-bottom: 2rem;
+    page-break-inside: avoid;
+  }
+
+  .event h2 {
+    font-size: 18pt;
+    margin-bottom: 0.5rem;
+  }
+
+  .event p {
+    font-size: 14pt;
+    margin: 0.2rem 0;
+  }
+}
+
+/* Style the print button itself (only on screen) */
+.print-button {
+  background-color: #444;
+  color: white;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}

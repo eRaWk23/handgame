@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Resources - Handgame Events</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
     <div class="container header-flex">
-      <img src="handgame.jpeg" alt="Handgame Photo" class="header-img">
+      <img src="handgame.jpeg" alt="Handgame Photo" class="header-img" />
       <h1>Handgame Resources</h1>
       <p>Helpful links to learn, teach, or share Handgame knowledge.</p>
     </div>
@@ -20,9 +20,7 @@
         <li><a href="resources.html" class="active">Resources</a></li>
       </ul>
       <div class="submit-container">
-        <a class="submit-button" href="https://docs.google.com/forms/d/e/1FAIpQLSdsfO9J9FjrTWPrjU1psq89ikLejOkUvL07H5KEFegyWwQIMQ/viewform" target="_blank" rel="noopener noreferrer">
-          Submit an Event
-        </a>
+        <a class="submit-button" href="https://docs.google.com/forms/d/e/1FAIpQLSdsfO9J9FjrTWPrjU1psq89ikLejOkUvL07H5KEFegyWwQIMQ/viewform" target="_blank" rel="noopener noreferrer">Submit an Event</a>
       </div>
     </nav>
   </header>
@@ -57,37 +55,38 @@
   <footer>
     <div class="container">
       <div class="toggle-container">
-        <button class="toggle-button" onclick="document.body.classList.toggle('light-mode')">Toggle Light/Dark Mode</button>
+        <button class="toggle-button" onclick="toggleTheme()">Toggle Light/Dark Mode</button>
       </div>
       <p>&copy; 2025 HandGame Community | Hosted on GitHub Pages</p>
       <p>Contact: <a href="mailto:edesoto18@gmail.com">edesoto18@gmail.com</a></p>
     </div>
   </footer>
 
+  <!-- ✅ Full working theme + scroll script -->
   <script>
+    function toggleTheme() {
+      document.body.classList.toggle('light-mode');
+      localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
-      document.body.classList.remove('light');
-    });
-  </script>
-  <button id="back-to-top" title="Back to top">↑ Top</button>
-  <script>
-    // Show/hide the button on scroll
-    window.addEventListener('scroll', () => {
-        const button = document.getElementById('back-to-top');
-        if (window.scrollY > 300) {
-        button.style.display = 'block';
-        } else {
-        button.style.display = 'none';
-        }
+      const storedTheme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (storedTheme === 'light' || (!storedTheme && !prefersDark)) {
+        document.body.classList.add('light-mode');
+      }
     });
 
-    // Scroll smoothly to top when clicked
-    document.getElementById('back-to-top').addEventListener('click', () => {
-        window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-        });
+    window.addEventListener('scroll', () => {
+      const button = document.getElementById('back-to-top');
+      button.style.display = window.scrollY > 300 ? 'block' : 'none';
     });
-    </script>
+
+    document.getElementById('back-to-top').addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  </script>
+
+  <button id="back-to-top" title="Back to top">↑ Top</button>
 </body>
 </html>
