@@ -4,7 +4,7 @@ This is a lightweight, community-driven site to share upcoming Native American H
 
 ## 🌐 Website Features
 
-- 📅 Displays upcoming and past Handgame events
+- 📅 Displays upcoming Handgame events
 - 🔎 Searchable by location, tribe, or keywords
 - 🖼️ Flyer preview and Google Maps integration
 - 📄 Print-friendly layout
@@ -20,6 +20,14 @@ This is a lightweight, community-driven site to share upcoming Native American H
 ## 🚀 Submit Your Event
 
 Have an event to share? Use this [Google Form](https://docs.google.com/forms/d/e/1FAIpQLSdsfO9J9FjrTWPrjU1psq89ikLejOkUvL07H5KEFegyWwQIMQ/viewform) to submit your Handgame event.
+
+## ⚙️ How It Works
+
+1. Community members submit events using a [Google Form](https://docs.google.com/forms/d/e/1FAIpQLSdsfO9J9FjrTWPrjU1psq89ikLejOkUvL07H5KEFegyWwQIMQ/viewform).
+2. The responses are saved to a connected Google Sheet.
+3. The site fetches this data using [OpenSheet](https://opensheet.elk.sh/).
+4. Events are displayed automatically, sorted by date, with only the most relevant ones shown first.
+5. Visitors can search, view event flyers, or toggle past/upcoming events.
 
 ## 🤝 Contributing
 
