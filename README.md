@@ -30,7 +30,3 @@ Want to help improve this site? Feel free to fork the repo and submit pull reque
 For questions or feedback, email [edesoto18@gmail.com](mailto:edesoto18@gmail.com)
 
 ---
-
-### ✨ Example Screenshot
-
-![Screenshot of site](screenshot.png)
