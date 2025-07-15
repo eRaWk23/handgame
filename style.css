@@ -26,7 +26,7 @@ body {
 
 /* Light mode overrides for base body */
 body.light-mode {
-  background: #ffffff;
+  background: #f0f0f0;
   color: #111;
 }
 
