@@ -333,7 +333,7 @@ body.light-mode .toggle-details-button {
 }
 
 body.light-mode .toggle-details-button:hover {
-  background-color: #007a;
+  background-color: #444;
   color: #fff;
   border-color: #007acc;
 }
@@ -410,12 +410,12 @@ body.light-mode .event a:hover {
 }
 
 body.light-mode #back-to-top {
-  background-color: #007acc;
+  background-color: #555;
   color: #fff;
 }
 
 body.light-mode #back-to-top:hover {
-  background-color: #005999;
+  background-color: #444;
 }
 
 mark {
@@ -504,6 +504,29 @@ mark {
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.print-button:hover {
+  background-color: rgb(201, 201, 232);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.print-button:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+body.light-mode .print-button {
+  background-color: #e9e9e9;
+  color: #111;
+  border: 1px solid #aaa;
+}
+
+body.light-mode .print-button:hover {
+  background-color: #007acc;
+  color: #fff;
 }
 
 @media (max-width: 767px) {
