@@ -119,7 +119,7 @@ function render(events, searchTerm = '') {
   if (upcomingEvents.length > showLimit) {
     const btn = document.createElement('button');
     btn.textContent = 'Show More Events';
-    btn.className = 'toggle-more-button';
+    btn.className = 'toggle-button';
     btn.onclick = () => {
       const extras = document.querySelectorAll('.extra-upcoming');
       const hidden = extras[0].style.display === 'none';
