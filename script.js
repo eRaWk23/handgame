@@ -89,8 +89,10 @@ function createEventHTML(event, searchTerm = '') {
         <div class="event-details" style="display: none;">
           <p><strong>Details:</strong><br>${formattedDetails}</p>
         </div>
-        <p class="mobile-details-msg">Full details available on desktop view.</p>
       ` : ''}
+
+<p class="mobile-details-msg">Full details available on desktop view.</p>
+
       <p class="countdown">⏳ ${renderCountdown(endDate || startDate)}</p>
     </div>
   `;

@@ -7,7 +7,7 @@
    Root Theme and Global Settings
    ================================================== */
 :root {
-  color-scheme: dark;
+  color-scheme: light dark;
 }
 
 /* ==================================================
@@ -24,72 +24,14 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Light mode overrides for base body */
 body.light-mode {
   background: #f0f0f0;
   color: #111;
 }
 
 /* ==================================================
-   Header Styles
+   Typography & Headings
    ================================================== */
-
-header h1 {
-  font-size: 2.4rem;
-  margin-bottom: 0.5rem;
-}
-
-/* ==================================================
-   Navigation Bar Styles
-   ================================================== */
-.navbar {
-  background-color: #1e1e1e;
-  padding: 0.75rem 1rem;
-}
-
-.nav-links {
-  list-style: none;
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  margin: 0;
-  padding: 0;
-}
-
-.nav-links li a {
-  color: #fff;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 1.1rem;
-  transition: color 0.2s ease;
-}
-
-.nav-links li a:hover {
-  color: rgb(201, 201, 232);
-}
-
-/* Light mode overrides for header and navbar */
-body.light-mode header,
-body.light-mode footer,
-body.light-mode .navbar {
-  background: #f0f0f0;
-  color: #111;
-  border-color: #007acc;
-}
-
-body.light-mode .nav-links li a {
-  color: #111;
-}
-
-body.light-mode .nav-links li a:hover {
-  color: #444;
-  background-color:  #ddd;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
 h1 {
   font-size: 3.5rem;
   font-weight: 800;
@@ -112,13 +54,90 @@ h1 {
   animation: glowFade 2s ease-in-out;
 }
 
+header h1 {
+  font-size: 2.4rem;
+  margin-bottom: 0.5rem;
+}
+
 /* ==================================================
-   Main Content Container
+   Layout Containers
    ================================================== */
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  text-align: center;
+}
+
 main {
   padding: 1.5rem;
   max-width: 1000px;
   margin: 0 auto;
+}
+
+/* ==================================================
+   Header & Footer
+   ================================================== */
+header > .container,
+footer > .container {
+  border-radius: 10px;
+  background-color: #1e1e1e;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+}
+
+body.light-mode header > .container,
+body.light-mode footer > .container {
+  background-color: #ffffff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode footer {
+  background: #f0f0f0;
+  color: #111;
+}
+
+/* ==================================================
+   Navigation Bar Styles
+   ================================================== */
+.navbar {
+  background-color: #1e1e1e;
+  padding: 0.75rem 1rem;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links li a {
+  color: white;
+  font-weight: bold;
+  font-size: 1.1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: background-color 0.25s ease, color 0.25s ease;
+  text-decoration: none;
+}
+
+.nav-links li a:hover {
+  background-color: rgb(201, 201, 232);
+  color: #111;
+}
+
+body.light-mode .nav-links li a {
+  color: #111;
+}
+
+body.light-mode .nav-links li a:hover {
+  background-color: #ccc;
+  color: black;
 }
 
 /* ==================================================
@@ -146,497 +165,8 @@ body.light-mode #search {
 }
 
 /* ==================================================
-   Event Cards
+   Unified Button Styling
    ================================================== */
-.event {
-  background: #1e1e1e;
-  border: 1px solid #333;
-  border-radius: 10px;
-  padding: 1rem;
-  margin-bottom: 3rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-  font-family: 'Roboto Slab', serif;
-}
-
-body.light-mode .event {
-  background: #ffffff;
-  border: 1px solid #bbb;
-  color: #111;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-
-/* ==================================================
-   Filter Buttons
-   ================================================== */
-.filter-button {
-  background-color: #2a2a2a;
-  border: 1px solid #555;
-  border-radius: 6px;
-  padding: 0.3rem 0.6rem;
-  margin: 0.2rem;
-  cursor: pointer;
-  font-size: 1rem;
-  color: #e0e0e0;
-  transition: background 0.2s ease-in-out;
-}
-
-.filter-button:hover {
-  background-color: rgb(201, 201, 232);
-  color: #fff;
-}
-
-body.light-mode .filter-button {
-  background-color: #e9e9e9;
-  border: 1px solid #aaa;
-  color: #111;
-}
-
-/* ==================================================
-   Toggle Theme Button
-   ================================================== */
-.toggle-container {
-  text-align: center;
-  margin: 1rem 0;
-}
-
-.toggle-button {
-  background: #555;
-  color: #fff;
-  border: none;
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.toggle-button:hover {
-  background: rgb(201, 201, 232);
-}
-
-/* ==================================================
-   Submit Button
-   ================================================== */
-.submit-button {
-  display: inline-block;
-  padding: 0.75em 1.5em;
-  margin-top: 1em;
-  background-color: #555;
-  color: #fff;
-  font-weight: bold;
-  text-align: center;
-  text-decoration: none;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.submit-button:hover,
-.submit-button:focus {
-  background-color: rgb(201, 201, 232);
-  transform: translateY(-1px);
-}
-
-.submit-button:active {
-  transform: translateY(1px);
-  box-shadow: none;
-}
-
-/* ==================================================
-   Footer Styles
-   ================================================== 
-
-*/
-body.light-mode footer {
-  background: #f0f0f0;
-  color: #111;
-}
-
-
-/* ==================================================
-   Container Utility Class
-   ================================================== */
-.container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 0 1rem;
-  box-sizing: border-box;
-  text-align: center;
-}
-
-/* ==================================================
-   Responsive Image Styling for Header
-   ================================================== */
-.header-img {
-  width: 100%;
-  max-width: 800px;
-  height: auto;
-  max-height: 250px;
-  object-fit: cover;
-  border-radius: 8px;
-  padding: 0 1rem;
-  display: block;
-  margin: 0 auto;
-  box-sizing: border-box;
-}
-
-/* ==================================================
-   Flexbox Layout for Header Content
-   ================================================== */
-.header-flex {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-  text-align: center;
-}
-
-/* Center ul and keep bullets aligned with text */
-main section ul {
-  list-style-position: inside;
-  padding: 0;
-  text-align: center;
-}
-
-main section ul li {
-  margin: 0.5rem 0;
-}
-
-.event p {
-  word-wrap: break-word;
-  white-space: normal;
-}
-
-/* ==================================================
-   Toggle Details Button & Event Details
-   ================================================== */
-.toggle-details-button {
-  margin-top: 0.75rem;
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #555;
-  color: #e0e0e0;
-  border: 1px solid #555;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.toggle-details-button:hover {
-  background-color: rgb(201, 201, 232);
-  color: #fff;
-}
-
-body.light-mode .toggle-details-button {
-  background-color: #e9e9e9;
-  color: #111;
-  border: 1px solid #aaa;
-}
-
-body.light-mode .toggle-details-button:hover {
-  background-color: #444;
-  color: #fff;
-  border-color: #007acc;
-}
-
-.event-details {
-  display: none;
-  margin: 0 auto;
-  padding: 0.25rem 0;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  line-height: 1.3;
-  font-size: 1rem;
-  text-align: center;
-  max-width: 500px;
-  max-height: fit-content;
-}
-
-/* Mobile-specific overrides */
-@media (max-width: 767px) {
-  .event-details,
-  .toggle-details-button {
-    display: none !important;
-  }
-
-  .mobile-details-msg {
-    display: block !important;
-    text-align: center;
-    font-size: 0.9rem;
-    color: #888;
-    margin-top: 0.5rem;
-  }
-}
-
-/* Desktop hides the mobile message */
-@media (min-width: 768px) {
-  .mobile-details-msg {
-    display: none !important;
-  }
-}
-
-.event a {
-  color: #4dabf7;
-  text-decoration: none;
-  transition: color 0.2s ease, opacity 0.2s ease;
-}
-
-.event a:hover {
-  color: #90caf9;
-  opacity: 0.85;
-  text-decoration: underline;
-}
-
-body.light-mode .event a {
-  color: #007acc;
-}
-
-body.light-mode .event a:hover {
-  color: #005999;
-}
-
-.event img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 6px;
-  margin-top: 0.5rem;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.event img:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-}
-
-#back-to-top {
-  display: none;
-  position: fixed;
-  bottom: 40px;
-  right: 30px;
-  z-index: 999;
-  background-color: #555;
-  color: #fff;
-  border: none;
-  padding: 0.7rem 1rem;
-  font-size: 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-#back-to-top:hover {
-  background-color: rgb(201, 201, 232);
-  transform: translateY(-2px);
-}
-
-body.light-mode #back-to-top {
-  background-color: #555;
-  color: #fff;
-}
-
-body.light-mode #back-to-top:hover {
-  background-color: #444;
-}
-
-mark {
-  background-color: rgb(43, 167, 192);
-  color: #000;
-  padding: 0 2px;
-  border-radius: 3px;
-}
-
-.flyer-link {
-  display: inline-block;
-  background-color: #444;
-  color: white;
-  padding: 6px 12px;
-  text-decoration: none;
-  border-radius: 5px;
-  font-size: 0.95rem;
-  margin-top: 8px;
-  transition: background-color 0.2s ease;
-}
-
-.flyer-link:hover {
-  background-color: #666;
-}
-
-.flyer-img {
-  max-width: 100%;
-  max-height: 300px;
-  display: block;
-  margin-top: 0.5rem;
-  border-radius: 8px;
-}
-
-.flyer-error.show-error {
-  display: block !important;
-}
-
-body.light-mode .flyer-link {
-  background-color: #e9e9e9;
-  color: #111;
-  border: 1px solid #aaa;
-}
-
-body.light-mode .flyer-link:hover {
-  background-color: #d0d0d0;
-  color: #000;
-}
-
-.toggle-more-button {
-  background-color: #444;
-  color: white;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.toggle-more-button:hover {
-  background-color: rgb(201, 201, 232);
-  color: #fff;
-}
-
-/* Hide non-essential elements in print view */
-@media print {
-  header,
-  nav,
-  footer,
-  #search,
-  #back-to-top,
-  .toggle-button,
-  .toggle-details-button,
-  .flyer-img,
-  .flyer-link,
-  .flyer-error,
-  .countdown,
-  .event-details,
-  .submit-container {
-    display: none !important;
-  }
-
-  body {
-    background: white;
-    color: black;
-    font-size: 16pt;
-  }
-
-  .event {
-    border: none;
-    box-shadow: none;
-    margin-bottom: 2rem;
-    page-break-inside: avoid;
-  }
-
-  .event h2 {
-    font-size: 18pt;
-    margin-bottom: 0.5rem;
-  }
-
-  .event p {
-    font-size: 14pt;
-    margin: 0.2rem 0;
-  }
-}
-
-/* Style the print button itself (only on screen) */
-.print-button {
-  background-color: #444;
-  color: white;
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.print-button:hover {
-  background-color: rgb(201, 201, 232);
-  color: #fff;
-  transform: translateY(-1px);
-}
-
-.print-button:active {
-  transform: translateY(1px);
-  box-shadow: none;
-}
-
-body.light-mode .print-button {
-  background-color: #e9e9e9;
-  color: #111;
-  border: 1px solid #aaa;
-}
-
-body.light-mode .print-button:hover {
-  background-color: #007acc;
-  color: #fff;
-}
-
-@media (max-width: 767px) {
-  .toggle-details-button,
-  .event-details,
-  .print-button,
-  .mobile-details-msg {
-    display: none !important;
-  }
-  .header-img {
-    width: 100%;
-    max-width: 100%;
-    height: auto;
-    max-height: 180px;
-    object-fit: cover;
-    border-radius: 8px;
-  }
-
-   .header-flex {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-}
-
-.mobile-details-msg {
-  display: none;
-  font-size: 0.9rem;
-  color: #555;
-}
-
-header > .container,
-footer > .container {
-  border-radius: 10px;
-  background-color: #1e1e1e; /* or a matching light-mode color */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* optional for event card feel */
-  padding: 1rem;
-}
-
-body.light-mode header > .container,
-body.light-mode footer > .container {
-  background-color: #ffffff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-}
-
-@keyframes glowFade {
-  0% {
-    opacity: 0;
-    transform: scale(0.95);
-    text-shadow: none;
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* === Unified Button Styling === */
 button,
 .print-button,
 .submit-button,
@@ -672,7 +202,6 @@ button:hover,
   transform: translateY(-1px);
 }
 
-/* === Light Mode: Keep Clean & Professional, No Blue Hover === */
 body.light-mode button,
 body.light-mode .print-button,
 body.light-mode .submit-button,
@@ -696,27 +225,235 @@ body.light-mode .flyer-link:hover {
   color: black;
 }
 
-/* === Navbar Links Unified Styling === */
-.nav-links li a {
-  color: white;
-  font-weight: bold;
-  font-size: 1.1rem;
-  padding: 0.5rem 1rem;
+/* ==================================================
+   Event Cards
+   ================================================== */
+.event {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  font-family: 'Roboto Slab', serif;
+}
+
+body.light-mode .event {
+  background: #ffffff;
+  border: 1px solid #bbb;
+  color: #111;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.event a {
+  color: #4dabf7;
+  text-decoration: none;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.event a:hover {
+  color: #90caf9;
+  opacity: 0.85;
+  text-decoration: underline;
+}
+
+body.light-mode .event a {
+  color: #007acc;
+}
+
+body.light-mode .event a:hover {
+  color: #005999;
+}
+
+.event p {
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+.event img {
+  max-width: 100%;
+  height: auto;
   border-radius: 6px;
-  transition: background-color 0.25s ease, color 0.25s ease;
+  margin-top: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.nav-links li a:hover {
+.event img:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.event-details {
+  display: none;
+  margin: 0 auto;
+  padding: 0.25rem 0;
+  max-width: 500px;
+  text-align: center;
+  font-size: 1rem;
+  white-space: pre-wrap;
+  line-height: 1.4;
+  overflow: hidden;
+}
+
+.flyer-img {
+  max-width: 100%;
+  max-height: 300px;
+  display: block;
+  margin-top: 0.5rem;
+  border-radius: 8px;
+}
+
+.flyer-error.show-error {
+  display: block !important;
+}
+
+/* ==================================================
+   Utility Classes and Media Queries
+   ================================================== */
+.header-img {
+  width: 100%;
+  max-width: 800px;
+  height: auto;
+  max-height: 250px;
+  object-fit: cover;
+  border-radius: 8px;
+  padding: 0 1rem;
+  display: block;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.header-flex {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: center;
+}
+
+main section ul {
+  list-style-position: inside;
+  padding: 0;
+  text-align: center;
+}
+
+main section ul li {
+  margin: 0.5rem 0;
+}
+
+.mark {
+  background-color: rgb(43, 167, 192);
+  color: #000;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+#back-to-top {
+  display: none;
+  position: fixed;
+  bottom: 40px;
+  right: 30px;
+  z-index: 999;
+  background-color: #555;
+  color: #fff;
+  padding: 0.7rem 1rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#back-to-top:hover {
   background-color: rgb(201, 201, 232);
-  color: #111;
+  transform: translateY(-2px);
 }
 
-/* Light Mode: Navbar Consistency */
-body.light-mode .nav-links li a {
-  color: #111;
+body.light-mode #back-to-top {
+  background-color: #555;
+  color: #fff;
 }
 
-body.light-mode .nav-links li a:hover {
-  background-color: #ccc;
-  color: black;
+body.light-mode #back-to-top:hover {
+  background-color: #444;
+}
+
+@media (max-width: 767px) {
+  .toggle-details-button,
+  .event-details,
+  .print-button {
+    display: none !important;
+  }
+  .header-img {
+    max-height: 180px;
+  }
+  .header-flex {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .mobile-details-msg {
+    display: block !important;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #888;
+    margin-top: 0.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-details-msg {
+    display: none !important;
+  }
+}
+
+@media print {
+  header,
+  nav,
+  footer,
+  #search,
+  #back-to-top,
+  .toggle-button,
+  .toggle-details-button,
+  .flyer-img,
+  .flyer-link,
+  .flyer-error,
+  .countdown,
+  .event-details,
+  .submit-container {
+    display: none !important;
+  }
+  body {
+    background: white;
+    color: black;
+    font-size: 16pt;
+  }
+  .event {
+    border: none;
+    box-shadow: none;
+    margin-bottom: 2rem;
+    page-break-inside: avoid;
+  }
+  .event h2 {
+    font-size: 18pt;
+    margin-bottom: 0.5rem;
+  }
+  .event p {
+    font-size: 14pt;
+    margin: 0.2rem 0;
+  }
+}
+
+@keyframes glowFade {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+    text-shadow: none;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
