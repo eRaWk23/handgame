@@ -568,6 +568,23 @@ body.light-mode .print-button:hover {
   }
 }
 
+@media (max-width: 767px) {
+  .header-img {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+   .header-flex {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
+
 .mobile-details-msg {
   display: none;
   font-size: 0.9rem;
