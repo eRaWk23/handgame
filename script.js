@@ -198,4 +198,17 @@ async function loadEvents() {
   }
 }
 
-window.addEventListener('DOMContentLoaded', loadEvents);
+window.addEventListener('DOMContentLoaded', () => {
+  const storedTheme = localStorage.getItem('theme');
+
+  // Force dark mode unless light mode is explicitly saved
+  if (storedTheme === 'light') {
+    document.body.classList.add('light-mode');
+  } else {
+    document.body.classList.remove('light-mode');
+    localStorage.setItem('theme', 'dark');  // Set default for future
+  }
+
+  loadEvents();
+});
+

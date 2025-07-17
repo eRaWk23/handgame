@@ -344,16 +344,38 @@ body.light-mode .toggle-details-button:hover {
 
 .event-details {
   display: none;
-  margin-top: 0.5rem;
+  margin: 0 auto;
+  padding: 0.25rem 0;
   white-space: pre-wrap;
   word-wrap: break-word;
-  line-height: 1.5;
+  line-height: 1.3;
   font-size: 1rem;
+  text-align: center;
+  max-width: 500px;
+  max-height: fit-content;
+}
 
-  max-height: none !important;
-  overflow: visible !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+/* Mobile-specific overrides */
+@media (max-width: 767px) {
+  .event-details,
+  .toggle-details-button {
+    display: none !important;
+  }
+
+  .mobile-details-msg {
+    display: block !important;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #888;
+    margin-top: 0.5rem;
+  }
+}
+
+/* Desktop hides the mobile message */
+@media (min-width: 768px) {
+  .mobile-details-msg {
+    display: none !important;
+  }
 }
 
 .event a {
@@ -566,9 +588,6 @@ body.light-mode .print-button:hover {
   .mobile-details-msg {
     display: none !important;
   }
-}
-
-@media (max-width: 767px) {
   .header-img {
     width: 100%;
     max-width: 100%;
