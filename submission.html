@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Submit HandGame Event</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 2rem;
+    }
+    form {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, textarea, button {
+      width: 100%;
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    label {
+      font-weight: bold;
+    }
+    #form-status {
+      text-align: center;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    #form-status.success {
+      color: green;
+    }
+    #form-status.error {
+      color: red;
+    }
+    .back-button {
+      display: block;
+      margin: 0 auto 1.5rem;
+      text-align: center;
+      background: #777;
+    }
+    .back-button:hover {
+      background: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <button class="back-button" onclick="window.location.href='index.html'">← Back </button>
+
+  <form id="event-form">
+    <h2>Submit a HandGame Event</h2>
+
+    <input type="text" name="title" placeholder="Event Title" required />
+    <input type="date" name="start_date" required />
+    <input type="date" name="end_date" />
+    <input type="text" name="location" placeholder="Location" required />
+    <input type="text" name="tribe" placeholder="Tribe/Group" />
+    <textarea name="details" placeholder="Event Details (optional)"></textarea>
+
+    <label>Upload Flyer:</label>
+    <input type="file" name="flyer" accept="image/*" />
+
+    <label>Or Link to Flyer:</label>
+    <input type="url" name="flyer_url" placeholder="https://..." />
+
+    <button type="submit">Submit Event</button>
+    <p id="form-status"></p>
+  </form>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js'
+
+    const supabaseUrl = 'https://ulnoqchwdlcaneifogdz.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsbm9xY2h3ZGxjYW5laWZvZ2R6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3ODkzODAsImV4cCI6MjA2ODM2NTM4MH0.cuBr-_Fe4lmHdu85hSF39Z60vb8Ogfue57TeJmPKPVQ';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    document.getElementById('event-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const form = e.target;
+      const status = document.getElementById('form-status');
+      status.textContent = '';
+      status.className = '';
+
+      const title = form.title.value.trim();
+      const start_date = form.start_date.value;
+      const end_date = form.end_date.value || null;
+      const location = form.location.value.trim();
+      const tribe = form.tribe.value.trim() || null;
+      const details = form.details.value.trim() || null;
+
+      let flyer_url = form.flyer_url.value.trim() || null;
+      const flyerFile = form.flyer.files[0];
+
+      // Upload flyer image if provided
+      if (flyerFile) {
+        const fileExt = flyerFile.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `flyers/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('event-flyers')
+          .upload(filePath, flyerFile);
+
+        if (uploadError) {
+          status.textContent = `❌ Upload failed: ${uploadError.message}`;
+          status.className = 'error';
+          return;
+        }
+
+        const { data } = supabase.storage.from('event-flyers').getPublicUrl(filePath);
+        flyer_url = data.publicUrl;
+      }
+
+      // Insert event data
+      const { error } = await supabase.from('events').insert([{
+        title,
+        start_date,
+        end_date,
+        location,
+        tribe,
+        details,
+        flyer_url
+      }]);
+
+      if (error) {
+        status.textContent = `❌ Error submitting event: ${error.message}`;
+        status.className = 'error';
+      } else {
+        status.textContent = '✅ Event submitted successfully! Redirecting...';
+        status.className = 'success';
+        form.reset();
+
+        // Redirect after short delay
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 2500);
+      }
+    });
+  </script>
+</body>
+</html>
