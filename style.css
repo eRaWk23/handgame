@@ -457,3 +457,31 @@ body.light-mode #back-to-top:hover {
     transform: scale(1);
   }
 }
+
+.event-card {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  font-family: 'Roboto Slab', serif;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.event-card:hover {
+  transform: scale(1.01);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+body.light-mode .event-card {
+  background: #ffffff;
+  border: 1px solid #bbb;
+  color: #111;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+body.light-mode .event-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
