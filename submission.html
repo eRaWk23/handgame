@@ -183,7 +183,7 @@
     import { createClient } from 'https://esm.sh/@supabase/supabase-js';
 
     const supabaseUrl = 'https://ulnoqchwdlcaneifogdz.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // your anon key
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsbm9xY2h3ZGxjYW5laWZvZ2R6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3ODkzODAsImV4cCI6MjA2ODM2NTM4MH0.cuBr-_Fe4lmHdu85hSF39Z60vb8Ogfue57TeJmPKPVQ';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const form = document.getElementById('event-form');
@@ -191,14 +191,6 @@
     const flyerInput = form.flyer;
     const flyerUrlInput = form.flyer_url;
     const flyerPreview = document.getElementById('flyer-preview');
-
-    // 🔐 Sign in anonymously to allow storage uploads
-    const { error: authError } = await supabase.auth.signInAnonymously();
-    if (authError) {
-        console.error("Auth error:", authError);
-        status.textContent = `❌ Authentication failed`;
-        status.className = 'error';
-    }
 
     flyerInput.addEventListener('change', () => {
         flyerUrlInput.value = '';
@@ -232,8 +224,10 @@
         const location = form.location.value.trim();
         const tribe = form.tribe.value.trim() || null;
         const details = form.details.value.trim() || null;
-        let flyer_url = flyerUrlInput.value.trim() || null;
         const flyerFile = flyerInput.files[0];
+
+        // ✅ Upload flyer file if provided
+        let flyer_url = flyerUrlInput.value.trim() || null;
 
         // ✅ Validate flyer URL if used
         if (!flyerFile && flyer_url && !/^https?:\/\/.+\.(jpg|jpeg|png|gif)$/i.test(flyer_url)) {
@@ -242,11 +236,10 @@
         return;
         }
 
-        // ✅ Upload flyer file if provided
         if (flyerFile) {
         const fileExt = flyerFile.name.split('.').pop();
         const fileName = `${Date.now()}.${fileExt}`;
-        const filePath = `flyers/${fileName}`;
+        const filePath = `${fileName}`; // Not in subfolder
 
         const { error: uploadError } = await supabase.storage
             .from('event-flyers')
@@ -264,9 +257,10 @@
         const { data: publicUrlData } = supabase.storage
             .from('event-flyers')
             .getPublicUrl(filePath);
-
         flyer_url = publicUrlData?.publicUrl;
+        console.log("Resolved flyer URL:", flyer_url);
         }
+
 
         // ✅ Insert event into Supabase table
         const { error: insertError } = await supabase.from('events').insert([{
