@@ -6,7 +6,7 @@ A lightweight, community-powered site to share and discover Native American Hand
 
 - 📅 Displays upcoming Handgame events only
 - 🔎 Search by location, tribe, or keywords
-- 🖼️ Flyer preview with modal viewer
+- 🖼️ Flyer preview
 - ⛔ Auto-hides expired events and flags flyers older than 30 days
 - 🔄 Pagination for smoother browsing
 - 📄 Print-friendly layout
