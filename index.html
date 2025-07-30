@@ -8,65 +8,50 @@
 </head>
 <body>
   <header>
-     <div class="container header-flex">
+    <div class="container header-flex">
       <h1>Handgame Events</h1>
       <img src="handgame.jpeg" alt="Handgame Photo" class="header-img" />
       <nav class="navbar">
         <ul class="nav-links">
           <li><a href="index.html" class="active">Home</a></li>
           <li><a href="about.html">About</a></li>
-          <li><a href="resources.html">Resources</a></li>
+          <!-- <li><a href="resources.html">Resources</a></li> -->
         </ul>
         <p>Gathering and sharing upcoming Handgame dates and flyers with the community.</p>
         <div class="submit-container">
-          <a class="submit-button" href="https://docs.google.com/forms/d/e/1FAIpQLSdsfO9J9FjrTWPrjU1psq89ikLejOkUvL07H5KEFegyWwQIMQ/viewform" target="_blank" rel="noopener noreferrer">Submit an Event</a>
+          <a class="submit-button" href="submission.html">Submit an Event</a>
         </div>
       </nav>
     </div>
   </header>
 
   <main class="container">
-
     <h2>Upcoming Events</h2>
-
     <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1rem;">
       <input type="text" id="search" placeholder="Search" aria-label="Search events">
     </div>
-
     <div id="event-list"></div>
-
     <div style="text-align: center; margin-top: 1rem;">
       <button class="print-button">Printable View</button>
     </div>
+    <br>
   </main>
 
-  <div id="event-modal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <span class="close-button">&times;</span>
-      <h3 id="modal-title"></h3>
-      <p><strong>Date:</strong> <span id="modal-date"></span></p>
-      <p><strong>Location:</strong> <span id="modal-location"></span></p>
-      <p><strong>Tribe/Group:</strong> <span id="modal-tribe"></span></p>
-      <div id="modal-flyer"></div>
-    </div>
-  </div>
-
   <footer>
-      <div class="container">
-        <div class="toggle-container">
-          <button class="toggle-button" onclick="toggleTheme()">Toggle Light/Dark Mode</button>
-        </div>
-        <p>&copy; 2025 HandGame Community | Hosted on GitHub Pages</p>
-        <p>Contact: <a href="mailto:edesoto18@gmail.com">edesoto18@gmail.com</a></p>
+    <div class="container">
+      <div class="toggle-container">
+        <button class="toggle-button" onclick="toggleTheme()">Toggle Light/Dark Mode</button>
       </div>
+      <p>&copy; 2025 HandGame Community | Hosted on GitHub Pages</p>
+      <p>Contact: <a href="mailto:edesoto18@gmail.com">edesoto18@gmail.com</a></p>
+    </div>
+    <button id="back-to-top" title="Back to top">↑ Top</button>
   </footer>
 
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
 
   <script>
     const printBtn = document.querySelector('.print-button');
-
-    // Hide the button entirely on small screens (less than 768px wide)
     if (window.innerWidth < 768) {
       printBtn.style.display = 'none';
     } else {
@@ -77,10 +62,7 @@
         window.print();
       });
     }
-  </script>
 
-  <!-- 🌞 THEME + MODAL SCRIPT -->
-  <script>
     function toggleTheme() {
       document.body.classList.toggle('light-mode');
       localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
@@ -102,20 +84,17 @@
         if (e.key === 'Escape') modal.style.display = 'none';
       });
     });
-  </script>
 
-  <button id="back-to-top" title="Back to top">↑ Top</button>
-  <script>
-    // Back to top logic
     window.addEventListener('scroll', () => {
       const button = document.getElementById('back-to-top');
       button.style.display = window.scrollY > 300 ? 'block' : 'none';
     });
 
-    document.getElementById('back-to-top').addEventListener('click', () => {
+    document.getElementById('back-to-top')?.addEventListener('click', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   </script>
 
+  <button id="back-to-top" title="Back to top">↑ Top</button>
 </body>
 </html>

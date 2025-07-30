@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Submit HandGame Event</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: #121212;
+      color: #e0e0e0;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    body.light-mode {
+      background: #f0f0f0;
+      color: #111;
+    }
+
+    form {
+      max-width: 700px;
+      margin: 0 auto;
+      background: #1e1e1e;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      font-family: 'Roboto Slab', serif;
+    }
+
+    body.light-mode form {
+      background: #ffffff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 2rem;
+      color: #ffdb6e;
+    }
+
+    input, textarea, button, label {
+      display: block;
+      width: 100%;
+      font-size: 1.05rem;
+      margin-bottom: 1.25rem;
+    }
+
+    input, textarea {
+      padding: 0.75rem;
+      border: 1px solid #444;
+      border-radius: 8px;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    body.light-mode input,
+    body.light-mode textarea {
+      background-color: #fff;
+      color: #111;
+      border: 1px solid #aaa;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    label {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    button {
+      font-size: 1.1rem;
+      font-weight: bold;
+      padding: 0.75rem 1.5rem;
+      margin-top: 1rem;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      background-color: #444;
+      color: white;
+      transition: background-color 0.25s ease, transform 0.2s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+
+    button:hover {
+      background-color: rgb(201, 201, 232);
+      color: #111;
+      transform: translateY(-1px);
+    }
+
+    body.light-mode button {
+      background-color: #e9e9e9;
+      color: #111;
+      border: 1px solid #bbb;
+    }
+
+    body.light-mode button:hover {
+      background-color: #ccc;
+      color: black;
+    }
+
+    .back-button {
+      background-color: #777;
+      margin-bottom: 1.5rem;
+      width: auto;
+      display: inline-block;
+      padding: 0.5rem 1rem;
+    }
+
+    .back-button:hover {
+      background-color: #666;
+    }
+
+    #form-status {
+      text-align: center;
+      font-weight: bold;
+    }
+
+    #form-status.success {
+      color: #4caf50;
+    }
+
+    #form-status.error {
+      color: #f44336;
+    }
+
+    #flyer-preview {
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    #flyer-preview img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      border: 2px solid #888;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <button class="back-button" onclick="window.location.href='index.html'">← Back</button>
+
+    <form id="event-form">
+      <h2>Submit a HandGame Event</h2>
+
+      <label>Event Title</label>
+      <input type="text" name="title" required />
+
+      <label>Start Date</label>
+      <input type="date" name="start_date" required />
+
+      <label>End Date</label>
+      <input type="date" name="end_date" />
+
+      <label>Location</label>
+      <input type="text" name="location" required />
+
+      <label>Tribe/Group</label>
+      <input type="text" name="tribe" />
+
+      <label>Event Details (optional)</label>
+      <textarea name="details" rows="4"></textarea>
+
+      <label>Upload Flyer</label>
+      <input type="file" name="flyer" accept="image/*" />
+
+      <label>Or Link to Flyer</label>
+      <input type="url" name="flyer_url" placeholder="https://..." />
+
+      <div id="flyer-preview"></div>
+
+      <button type="submit">Submit Event</button>
+      <p id="form-status"></p>
+    </form>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+
+    const supabaseUrl = 'https://ulnoqchwdlcaneifogdz.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsbm9xY2h3ZGxjYW5laWZvZ2R6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3ODkzODAsImV4cCI6MjA2ODM2NTM4MH0.cuBr-_Fe4lmHdu85hSF39Z60vb8Ogfue57TeJmPKPVQ';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const form = document.getElementById('event-form');
+    const status = document.getElementById('form-status');
+    const flyerInput = form.flyer;
+    const flyerUrlInput = form.flyer_url;
+    const flyerPreview = document.getElementById('flyer-preview');
+
+    flyerInput.addEventListener('change', () => {
+        flyerUrlInput.value = '';
+        flyerPreview.innerHTML = '';
+        if (flyerInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            flyerPreview.innerHTML = `<img src="${e.target.result}" alt="Flyer Preview" />`;
+        };
+        reader.readAsDataURL(flyerInput.files[0]);
+        }
+    });
+
+    flyerUrlInput.addEventListener('input', () => {
+        flyerInput.value = '';
+        flyerPreview.innerHTML = '';
+        const url = flyerUrlInput.value.trim();
+        if (url) {
+        flyerPreview.innerHTML = `<img src="${url}" alt="Flyer URL Preview" />`;
+        }
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        status.textContent = '';
+        status.className = '';
+
+        const title = form.title.value.trim();
+        const start_date = form.start_date.value;
+        const end_date = form.end_date.value || null;
+        const location = form.location.value.trim();
+        const tribe = form.tribe.value.trim() || null;
+        const details = form.details.value.trim() || null;
+        const flyerFile = flyerInput.files[0];
+
+        // ✅ Upload flyer file if provided
+        let flyer_url = flyerUrlInput.value.trim() || null;
+
+        // ✅ Validate flyer URL if used
+        if (!flyerFile && flyer_url && !/^https?:\/\/.+\.(jpg|jpeg|png|gif)$/i.test(flyer_url)) {
+        status.textContent = '❌ Invalid flyer URL';
+        status.className = 'error';
+        return;
+        }
+
+        if (flyerFile) {
+        const fileExt = flyerFile.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`; // Not in subfolder
+
+        const { error: uploadError } = await supabase.storage
+            .from('event-flyers')
+            .upload(filePath, flyerFile, {
+            cacheControl: '3600',
+            upsert: false,
+            });
+
+        if (uploadError) {
+            status.textContent = `❌ Upload failed: ${uploadError.message}`;
+            status.className = 'error';
+            return;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+            .from('event-flyers')
+            .getPublicUrl(filePath);
+        flyer_url = publicUrlData?.publicUrl;
+        console.log("Resolved flyer URL:", flyer_url);
+        }
+
+
+        // ✅ Insert event into Supabase table
+        const { error: insertError } = await supabase.from('events').insert([{
+        title,
+        start_date,
+        end_date,
+        location,
+        tribe,
+        details,
+        flyer_url
+        }]);
+
+        if (insertError) {
+        status.textContent = `❌ Error submitting event: ${insertError.message}`;
+        status.className = 'error';
+        } else {
+        status.textContent = '✅ Event submitted successfully! Redirecting...';
+        status.className = 'success';
+        form.reset();
+        flyerPreview.innerHTML = '';
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 2500);
+        }
+    });
+
+    // Theme on load
+    window.addEventListener('DOMContentLoaded', () => {
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        }
+    });
+  </script>
+
+</body>
+</html>
