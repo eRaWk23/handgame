@@ -32,7 +32,10 @@ A lightweight, community-powered site to share and discover Native American Hand
 
 ## 🤝 Contributing
 
-Want to help? Fork the repo, report bugs, or suggest improvements via pull request. All contributions are welcome.
+This project is open to pull requests!  
+Fork the repo → make changes → submit a PR.
+
+All suggestions, bug fixes, and features are welcome.
 
 ## 📫 Contact
 
