@@ -4,97 +4,118 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Handgame Events</title>
+  <meta name="description" content="Find and share upcoming Native American Handgame events near you. Dates, flyers, and locations all in one place." />
+
+  <!-- Open Graph / link preview -->
+  <meta property="og:title" content="Handgame Events" />
+  <meta property="og:description" content="Find and share upcoming Native American Handgame events near you." />
+  <meta property="og:image" content="https://www.handgame.info/handgame.jpeg" />
+  <meta property="og:url" content="https://www.handgame.info/" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <div class="container header-flex">
-      <h1>Handgame Events</h1>
-      <img src="handgame.jpeg" alt="Handgame Photo" class="header-img" />
-      <nav class="navbar">
-        <ul class="nav-links">
-          <li><a href="index.html" class="active">Home</a></li>
-          <li><a href="about.html">About</a></li>
-          <!-- <li><a href="resources.html">Resources</a></li> -->
-        </ul>
-        <p>Gathering and sharing upcoming Handgame dates and flyers with the community.</p>
-        <div class="submit-container">
-          <a class="submit-button" href="submission.html">Submit an Event</a>
-        </div>
-      </nav>
-    </div>
-  </header>
 
-  <main class="container">
-    <h2>Upcoming Events</h2>
-    <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1rem;">
-      <input type="text" id="search" placeholder="Search" aria-label="Search events">
-    </div>
-    <div id="event-list"></div>
-    <div style="text-align: center; margin-top: 1rem;">
-      <button class="print-button">Printable View</button>
-    </div>
-    <br>
-  </main>
-
-  <footer>
-    <div class="container">
-      <div class="toggle-container">
-        <button class="toggle-button" onclick="toggleTheme()">Toggle Light/Dark Mode</button>
+<header>
+  <div class="container header-flex">
+    <h1>Handgame Events</h1>
+    <img src="handgame.jpeg" alt="Handgame Photo" class="header-img" />
+    <nav class="navbar">
+      <ul class="nav-links">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <!-- <li><a href="resources.html">Resources</a></li> -->
+      </ul>
+      <p>Gathering and sharing upcoming Handgame dates and flyers with the community.</p>
+      <div class="submit-container">
+        <a class="submit-button" href="submission.html">Submit an Event</a>
       </div>
-      <p>&copy; 2025 HandGame Community | Hosted on GitHub Pages</p>
-      <p>Contact: <a href="mailto:edesoto18@gmail.com">edesoto18@gmail.com</a></p>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <h2>Upcoming Events</h2>
+
+  <div style="display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap; margin-bottom:1rem;">
+    <input type="text" id="search" placeholder="Search by location, tribe, or keyword…" aria-label="Search events">
+  </div>
+
+  <div id="event-list"></div>
+
+  <div style="text-align:center; margin-top:1rem;">
+    <button class="print-button">🖨️ Printable View</button>
+  </div>
+  <br>
+</main>
+
+<!-- Event detail modal — required by script.js -->
+<div id="event-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:#1e1e1e; border-radius:12px; padding:2rem; max-width:600px; width:90%; position:relative; max-height:90vh; overflow-y:auto;">
+    <button class="close-button" aria-label="Close modal" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; line-height:1;">✕</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="toggle-container">
+      <button class="toggle-button" onclick="toggleTheme()">☀️ / 🌙 Light/Dark Mode</button>
     </div>
-    <button id="back-to-top" title="Back to top">↑ Top</button>
-  </footer>
+    <p>&copy; 2025 HandGame Community | Hosted on GitHub Pages</p>
+    <p>Contact: <a href="mailto:edesoto18@gmail.com">edesoto18@gmail.com</a></p>
+  </div>
+  <!-- single back-to-top button -->
+  <button id="back-to-top" title="Back to top" style="display:none;">↑ Top</button>
+</footer>
 
-  <script type="module" src="script.js"></script>
-
-  <script>
-    const printBtn = document.querySelector('.print-button');
+<script type="module" src="script.js"></script>
+<script>
+  // Print button — hide on mobile
+  const printBtn = document.querySelector('.print-button');
+  if (printBtn) {
     if (window.innerWidth < 768) {
       printBtn.style.display = 'none';
     } else {
-      printBtn.addEventListener('click', () => {
-        if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-          alert("📄 For best results, switch to Desktop Mode or print from a computer.");
-        }
-        window.print();
-      });
+      printBtn.addEventListener('click', () => window.print());
+    }
+  }
+
+  // Theme toggle
+  function toggleTheme() {
+    document.body.classList.toggle('light-mode');
+    localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    // Restore saved theme or respect system preference
+    const stored = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (stored === 'light' || (!stored && !prefersDark)) {
+      document.body.classList.add('light-mode');
     }
 
-    function toggleTheme() {
-      document.body.classList.toggle('light-mode');
-      localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      const storedTheme = localStorage.getItem('theme');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (storedTheme === 'light' || (!storedTheme && !prefersDark)) {
-        document.body.classList.add('light-mode');
-      }
-
-      const modal = document.getElementById("event-modal");
-      const closeModal = document.querySelector(".close-button");
-
-      closeModal.onclick = () => modal.style.display = "none";
-      window.onclick = e => { if (e.target == modal) modal.style.display = "none"; };
+    // Modal wiring
+    const modal   = document.getElementById('event-modal');
+    const closeBtn = document.querySelector('.close-button');
+    if (modal && closeBtn) {
+      closeBtn.onclick = () => { modal.style.display = 'none'; };
+      window.onclick   = e  => { if (e.target === modal) modal.style.display = 'none'; };
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape') modal.style.display = 'none';
       });
-    });
+    }
+  });
 
-    window.addEventListener('scroll', () => {
-      const button = document.getElementById('back-to-top');
-      button.style.display = window.scrollY > 300 ? 'block' : 'none';
-    });
+  // Back-to-top
+  const topBtn = document.getElementById('back-to-top');
+  window.addEventListener('scroll', () => {
+    if (topBtn) topBtn.style.display = window.scrollY > 300 ? 'block' : 'none';
+  });
+  topBtn?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+</script>
 
-    document.getElementById('back-to-top')?.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  </script>
-
-  <button id="back-to-top" title="Back to top">↑ Top</button>
 </body>
 </html>

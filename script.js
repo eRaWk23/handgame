@@ -1,17 +1,14 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-// 🔐 Supabase settings
-const supabaseUrl = 'https://ulnoqchwdlcaneifogdz.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsbm9xY2h3ZGxjYW5laWZvZ2R6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3ODkzODAsImV4cCI6MjA2ODM2NTM4MH0.cuBr-_Fe4lmHdu85hSF39Z60vb8Ogfue57TeJmPKPVQ';
+const supabaseUrl = 'https://atorftwulkabkmhaeeir.supabase.co';
+const supabaseKey = 'sb_publishable_0CKKNOHPd3Yd6bDfkEuHlA_YgS9bJvF';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 let currentPage = 1;
 const eventsPerPage = 3;
 
-// DOM elements
 const eventList = document.getElementById("event-list");
 const searchInput = document.getElementById("search");
-
 let allEvents = [];
 
 async function loadEvents() {
@@ -22,69 +19,90 @@ async function loadEvents() {
 
   if (error) {
     console.error('Error fetching events:', error);
+    eventList.innerHTML = '<p style="text-align:center; color:#aaa;">Unable to load events right now. Try again later.</p>';
     return;
   }
 
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  // Filter to only show upcoming or recent events (today or future)
-  const upcomingEvents = data.filter(event => {
+  allEvents = data.filter(event => {
     const eventDate = new Date(event.start_date);
     return eventDate >= today;
   });
 
-  renderEvents(upcomingEvents);
+  if (allEvents.length === 0) {
+    eventList.innerHTML = '<p style="text-align:center; color:#aaa;">No upcoming events right now. Check back soon or <a href="submission.html">submit one</a>!</p>';
+    return;
+  }
+
+  renderEvents(allEvents);
 }
 
 function renderEvents(events) {
   eventList.innerHTML = "";
 
+  if (events.length === 0) {
+    eventList.innerHTML = '<p style="text-align:center; color:#aaa;">No events match your search.</p>';
+    return;
+  }
+
   const start = (currentPage - 1) * eventsPerPage;
   const end = start + eventsPerPage;
-  const paginatedEvents = events.slice(start, end);
+  const paginated = events.slice(start, end);
 
-  paginatedEvents.forEach(event => {
-    const eventDiv = document.createElement("div");
-    eventDiv.className = "event";
+  paginated.forEach(event => {
+    const div = document.createElement("div");
+    div.className = "event";
 
-    eventDiv.innerHTML = `
+    const dateStr = event.end_date && event.end_date !== event.start_date
+      ? `${formatDate(event.start_date)} – ${formatDate(event.end_date)}`
+      : formatDate(event.start_date);
+
+    div.innerHTML = `
       <h3>${event.title}</h3>
-      <p><strong>Date:</strong> ${event.start_date}</p>
-      <p><strong>Location:</strong> 
-        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}" target="_blank">
+      <p><strong>Date:</strong> ${dateStr}</p>
+      <p><strong>Location:</strong>
+        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}" target="_blank" rel="noopener">
           ${event.location}
         </a>
       </p>
-      <p><strong>Tribe/Group:</strong> ${event.tribe || "Not provided"}</p>
+      ${event.tribe ? `<p><strong>Tribe / Group:</strong> ${event.tribe}</p>` : ''}
+      ${event.details ? `<p><strong>Details:</strong> ${event.details}</p>` : ''}
       ${event.flyer_url ? `
-        <a href="${event.flyer_url}" target="_blank">
-          <img src="${event.flyer_url}" alt="Flyer preview" class="flyer-preview" style="max-width: 250px; border-radius: 8px; border: 2px solid #999; margin: 10px 0;" />
+        <a href="${event.flyer_url}" target="_blank" rel="noopener" style="display:block; text-align:center;">
+          <img src="${event.flyer_url}" alt="Event flyer for ${event.title}" class="flyer-preview"
+            style="max-width:250px; border-radius:8px; border:2px solid #999; margin:10px auto; display:block;" />
         </a>
-        <p style="font-size: 0.8rem;">Click flyer to view full size</p>
-      ` : `<p><em>No flyer available</em></p>`}
-      <p><strong>Details:</strong> ${event.details || "None provided"}</p>
+        <p style="font-size:0.8rem; color:#aaa;">Tap flyer to view full size</p>
+      ` : '<p><em>No flyer available</em></p>'}
     `;
 
-    eventList.appendChild(eventDiv);
+    eventList.appendChild(div);
   });
 
   renderPagination(events);
 }
 
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const [year, month, day] = dateStr.split('-');
+  const d = new Date(Number(year), Number(month) - 1, Number(day));
+  return d.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' });
+}
+
 function renderPagination(events) {
   let paginationDiv = document.getElementById("pagination");
-
   if (!paginationDiv) {
     paginationDiv = document.createElement("div");
     paginationDiv.id = "pagination";
-    paginationDiv.style.textAlign = "center";
-    paginationDiv.style.marginTop = "1rem";
+    paginationDiv.style.cssText = "text-align:center; margin-top:1rem;";
     document.querySelector("main").appendChild(paginationDiv);
   }
-
   paginationDiv.innerHTML = "";
 
   const totalPages = Math.ceil(events.length / eventsPerPage);
+  if (totalPages <= 1) return;
 
   for (let i = 1; i <= totalPages; i++) {
     const btn = document.createElement("button");
@@ -93,22 +111,23 @@ function renderPagination(events) {
     btn.onclick = () => {
       currentPage = i;
       renderEvents(events);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
     paginationDiv.appendChild(btn);
   }
 }
 
-// 🔍 Live search
+// Live search
 searchInput.addEventListener("input", e => {
   const query = e.target.value.toLowerCase();
+  currentPage = 1;
   const filtered = allEvents.filter(event =>
-    (event.title || "").toLowerCase().includes(query) ||
+    (event.title    || "").toLowerCase().includes(query) ||
     (event.location || "").toLowerCase().includes(query) ||
-    (event.tribe || "").toLowerCase().includes(query) ||
-    (event.details || "").toLowerCase().includes(query)
+    (event.tribe    || "").toLowerCase().includes(query) ||
+    (event.details  || "").toLowerCase().includes(query)
   );
   renderEvents(filtered);
 });
 
-// 🚀 Load events on page load
 window.addEventListener("DOMContentLoaded", loadEvents);
