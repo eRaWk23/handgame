@@ -2,13 +2,13 @@
 
 **[handgame.info](https://www.handgame.info)** — A community-powered site for sharing and discovering Native American Handgame events.
 
-Find upcoming events, browse flyers, and submit your own — all in one place, on any device.
+Find upcoming events, browse flyers, and submit your own. All in one place, on any device.
 
 ---
 
 ## What Is Handgame?
 
-Handgame (also called the stick game or bone game) is a traditional Native American guessing game played across many Nations and tribes. It's a game of music, rhythm, intuition, and team spirit — often played at powwows, gatherings, and tribal celebrations. Different regions have their own songs, rules, and styles. If you grew up around it, you know. If you're new, come find out.
+Handgame (also called the stick game or bone game) is a traditional Native American guessing game played across many Nations and tribes. It's a game of music, rhythm, intuition, and team spirit. Often played at powwows, gatherings, and tribal celebrations. Different regions have their own songs, rules, and styles. If you grew up around it, you know. If you're new, come find out.
 
 This site exists because event info was scattered across Facebook groups, text threads, and word of mouth. Now there's one place to check.
 
@@ -16,12 +16,12 @@ This site exists because event info was scattered across Facebook groups, text t
 
 ## What the Site Does
 
-- 📅 Lists **upcoming Handgame events** — expired events hide automatically
+- 📅 Lists **upcoming Handgame events** expired events hide automatically
 - 🔎 **Search** by location, tribe, or keyword
 - 🖼️ **Flyer previews** with download/view links
 - ⚠️ Flags flyers older than 30 days so stale info is visible
 - 📄 **Printable view** for posting at the hall or sharing at events
-- 🌞🌙 Light/Dark mode — respects your system preference
+- 🌞🌙 Light/Dark mode respects your system preference
 - 📱 Fully mobile-friendly
 - 🐢 Lightweight — works on slow connections
 
@@ -56,7 +56,7 @@ No frameworks, no build step. Open the HTML in a browser and it works.
 
 ## Contributing
 
-This project is open to pull requests. All help is welcome — code, design, bug reports, content.
+This project is open to pull requests. All help is welcome; code, design, bug reports, content.
 
 ### Getting Started (no install needed)
 
