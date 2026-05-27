@@ -152,12 +152,12 @@
       flyer_url = urlData?.publicUrl ?? null;
     }
 
-    // Check for duplicates
+    // Check for duplicates by date + location
     const { data: existing } = await supabase
       .from('events')
       .select('id, title, start_date, location')
-      .ilike('title', title)
-      .eq('start_date', start_date);
+      .eq('start_date', start_date)
+      .ilike('location', location);
 
     if (existing && existing.length > 0 && !form.dataset.confirmedDuplicate) {
       showStatus(`⚠️ "${existing[0].title}" on ${formatDate(start_date)} already exists. Submit again to post anyway.`, 'warning');
