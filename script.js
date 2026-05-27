@@ -1,7 +1,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 const supabaseUrl = 'https://atorftwulkabkmhaeeir.supabase.co';
-const supabaseKey = 'sb_publishable_0CKKNOHPd3Yd6bDfkEuHlA_YgS9bJvF';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0b3JmdHd1bGthYmttaGFlZWlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDk5MTQsImV4cCI6MjA5NDYyNTkxNH0.SW0OdvAZvAh81PqpLkez1MO8WnMruQxMoCitpcd-PMs';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 let currentPage = 1;
