@@ -152,15 +152,21 @@
       flyer_url = urlData?.publicUrl ?? null;
     }
 
-    // Check for duplicates by date + location
-    const { data: existing } = await supabase
+    // Check for duplicates by date + location, or date + title
+    const { data: byLocation } = await supabase
       .from('events')
       .select('id, title, start_date, location')
       .eq('start_date', start_date)
       .ilike('location', location);
-
-    if (existing && existing.length > 0 && !form.dataset.confirmedDuplicate) {
-      showStatus(`⚠️ "${existing[0].title}" on ${formatDate(start_date)} already exists. Submit again to post anyway.`, 'warning');
+    const { data: byTitle } = await supabase
+      .from('events')
+      .select('id, title, start_date, location')
+      .eq('start_date', start_date)
+      .ilike('title', title);
+    const existing = [...(byLocation || []), ...(byTitle || [])];
+    const uniqueExisting = existing.filter((e, i, arr) => arr.findIndex(x => x.id === e.id) === i);
+    if (uniqueExisting.length > 0 && !form.dataset.confirmedDuplicate) {
+      showStatus(`⚠️ "${uniqueExisting[0].title}" on ${formatDate(start_date)} already exists. Submit again to post anyway.`, 'warning');
       form.dataset.confirmedDuplicate = 'true';
       submitBtn.disabled = false;
       submitBtn.textContent = 'Submit Anyway';
