@@ -21,7 +21,7 @@
     #login-wrap { max-width: 400px; margin: 5rem auto; text-align: center; }
     #login-wrap input { width: 100%; padding: 0.75rem; font-size: 1rem; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; margin-bottom: 1rem; box-sizing: border-box; }
     #login-wrap button { width: 100%; padding: 0.75rem; background: #ffdb6e; color: #111; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
-    #login-error { color: #f44336; margin-top: 0.5rem; }
+    #login-error { color: #f44336; margin-top: 0.5rem; min-height: 1.5rem; }
     .filter-bar { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
     .filter-btn { padding: 0.4rem 1rem; border-radius: 20px; border: 1px solid #555; background: transparent; color: #ccc; cursor: pointer; }
     .filter-btn.active { background: #ffdb6e; color: #111; border-color: #ffdb6e; font-weight: bold; }
@@ -32,8 +32,9 @@
 <!-- Login screen -->
 <div id="login-wrap">
   <h2>Admin Login</h2>
-  <input type="password" id="admin-password" placeholder="Enter admin password" />
-  <button onclick="login()">Login</button>
+  <input type="email" id="admin-email" placeholder="Email" />
+  <input type="password" id="admin-password" placeholder="Password" />
+  <button id="login-btn" onclick="login()">Login</button>
   <p id="login-error"></p>
 </div>
 
@@ -62,37 +63,47 @@
   const SUPABASE_ANON_KEY = 'sb_publishable_0CKKNOHPd3Yd6bDfkEuHlA_YgS9bJvF';
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // Change this password to something only you know
-  const ADMIN_PASSWORD = 'handgame2026';
-
   let currentFilter = 'pending';
   let allEvents = [];
 
-  window.login = () => {
-    const pw = document.getElementById('admin-password').value;
-    if (pw === ADMIN_PASSWORD) {
-      document.getElementById('login-wrap').style.display = 'none';
-      document.getElementById('admin-panel').style.display = 'block';
-      sessionStorage.setItem('admin', 'true');
-      loadEvents();
+  // Check if already logged in
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) showPanel();
+
+  window.login = async () => {
+    const email    = document.getElementById('admin-email').value.trim();
+    const password = document.getElementById('admin-password').value;
+    const errEl    = document.getElementById('login-error');
+    const btn      = document.getElementById('login-btn');
+
+    btn.textContent = 'Logging in…';
+    btn.disabled = true;
+    errEl.textContent = '';
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      errEl.textContent = '❌ ' + error.message;
+      btn.textContent = 'Login';
+      btn.disabled = false;
     } else {
-      document.getElementById('login-error').textContent = '❌ Wrong password';
+      showPanel();
     }
   };
 
-  window.logout = () => {
-    sessionStorage.removeItem('admin');
+  window.logout = async () => {
+    await supabase.auth.signOut();
     document.getElementById('login-wrap').style.display = 'block';
     document.getElementById('admin-panel').style.display = 'none';
+    document.getElementById('admin-email').value = '';
+    document.getElementById('admin-password').value = '';
   };
 
-  // Allow Enter key on password field
   document.getElementById('admin-password').addEventListener('keydown', e => {
     if (e.key === 'Enter') window.login();
   });
 
-  // Restore session
-  if (sessionStorage.getItem('admin') === 'true') {
+  function showPanel() {
     document.getElementById('login-wrap').style.display = 'none';
     document.getElementById('admin-panel').style.display = 'block';
     loadEvents();
@@ -105,7 +116,7 @@
       .order('created_at', { ascending: false });
 
     if (error) {
-      document.getElementById('admin-event-list').innerHTML = `<p style="color:#f44336">Error loading events: ${error.message}</p>`;
+      document.getElementById('admin-event-list').innerHTML = `<p style="color:#f44336">Error: ${error.message}</p>`;
       return;
     }
     allEvents = data;
