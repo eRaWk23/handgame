@@ -109,6 +109,12 @@
     } catch { return false; }
   }
 
+  function formatDate(dateStr) {
+  const [y, m, d] = dateStr.split('-');
+  return new Date(Number(y), Number(m)-1, Number(d))
+    .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
   form.addEventListener('submit', async e => {
     e.preventDefault();
     status.textContent = '';
@@ -145,6 +151,22 @@
       const { data: urlData } = supabase.storage.from('event-flyers').getPublicUrl(fileName);
       flyer_url = urlData?.publicUrl ?? null;
     }
+
+    // Check for duplicates
+    const { data: existing } = await supabase
+      .from('events')
+      .select('id, title, start_date, location')
+      .ilike('title', title)
+      .eq('start_date', start_date);
+
+    if (existing && existing.length > 0 && !form.dataset.confirmedDuplicate) {
+      showStatus(`⚠️ "${existing[0].title}" on ${formatDate(start_date)} already exists. Submit again to post anyway.`, 'warning');
+      form.dataset.confirmedDuplicate = 'true';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Anyway';
+      return;
+    }
+    form.dataset.confirmedDuplicate = '';
 
     const { error: insertError } = await supabase.from('events').insert([{
       title, start_date, end_date, location, tribe, details, flyer_url

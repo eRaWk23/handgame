@@ -189,3 +189,7 @@ body.light-mode .back-button {
 body.light-mode .back-button:hover {
   background: #bbb;
 }
+
+#form-status.warning { 
+  color: #f5a623; 
+}
