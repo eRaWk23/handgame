@@ -62,7 +62,7 @@ This project is open to pull requests. All help is welcome; code, design, bug re
 
 ```bash
 # 1. Fork the repo on GitHub, then clone your fork
-git clone https://github.com/YOUR-USERNAME/handgame.git
+git clone https://github.com/eRaWk23/handgame.git
 cd handgame
 
 # 2. Open in your browser — no server needed
