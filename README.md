@@ -8,7 +8,7 @@ Find upcoming events, browse flyers, and submit your own. All in one place, on a
 
 ## What Is Handgame?
 
-Handgame (also called the stick game or bone game) is a traditional Native American guessing game played across many Nations and tribes. It's a game of music, rhythm, intuition, and team spirit. Often played at powwows, gatherings, and tribal celebrations. Different regions have their own songs, rules, and styles. If you grew up around it, you know. 
+Handgame is a traditional Native American guessing game played across many Nations and tribes. It's a game of music, rhythm, intuition, and team spirit. Often played at powwows, gatherings, and tribal celebrations. Different regions have their own songs, rules, and styles. If you grew up around it, you know. 
 
 This site exists because event info was scattered across Facebook groups, text threads, and word of mouth. Now there's one place to check.
 
@@ -20,7 +20,7 @@ This site exists because event info was scattered across Facebook groups, text t
 - 🔎 **Search** by location, tribe, or keyword
 - 🖼️ **Flyer previews** with download/view links
 - ⚠️ Flags flyers older than 30 days so stale info is visible
-- 📄 **Printable view** for posting at the hall or sharing at events
+- 📄 **Printable view** for posting or sharing at events
 - 🌞🌙 Light/Dark mode respects your system preference
 - 📱 Fully mobile-friendly
 - 🐢 Lightweight — works on slow connections
