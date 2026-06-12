@@ -102,9 +102,28 @@ function renderEvents(events) {
         </a>
         <p style="font-size:0.8rem; color:#aaa;">Tap flyer to view full size</p>
       ` : '<p><em>No flyer available</em></p>'}
+      <div style="text-align:right; margin-top:0.5rem;">
+        <button class="share-btn" data-title="${event.title}" data-id="${event.id}" style="background:none; border:1px solid #666; color:#aaa; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:0.8rem;">📤 Share</button>
+      </div>
     `;
 
     eventList.appendChild(div);
+
+    div.querySelector('.share-btn').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const title = btn.dataset.title;
+      const url = `${window.location.origin}${window.location.pathname}?event=${btn.dataset.id}`;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: `Handgame: ${title}`, url });
+        } catch (err) { /* user cancelled */ }
+      } else {
+        await navigator.clipboard.writeText(url);
+        btn.textContent = '✅ Link copied!';
+        setTimeout(() => { btn.textContent = '📤 Share'; }, 2000);
+      }
+    });
   });
 
   renderPagination(events);
