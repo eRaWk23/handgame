@@ -36,6 +36,15 @@ async function loadEvents() {
     return;
   }
 
+  // Event count
+  const existingCount = document.getElementById("event-count");
+  if (existingCount) existingCount.remove();
+  const countEl = document.createElement("p");
+  countEl.id = "event-count";
+  countEl.style.cssText = "text-align:center; color:#aaa; margin-bottom:1rem;";
+  countEl.textContent = `${allEvents.length} upcoming event${allEvents.length !== 1 ? 's' : ''}`;
+  eventList.before(countEl);
+
   renderEvents(allEvents);
 }
 
