@@ -9,7 +9,11 @@ const eventsPerPage = 3;
 
 const eventList = document.getElementById("event-list");
 const searchInput = document.getElementById("search");
+const togglePastBtn = document.getElementById("toggle-past");
+
 let allEvents = [];
+let pastEvents = [];
+let showingPast = false;
 
 async function loadEvents() {
   const { data, error } = await supabase
@@ -26,33 +30,41 @@ async function loadEvents() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  allEvents = data.filter(event => {
-    const eventDate = new Date(event.start_date);
-    return eventDate >= today;
-  });
+  allEvents = data.filter(event => new Date(event.start_date) >= today);
+  pastEvents = data.filter(event => new Date(event.start_date) < today).reverse();
 
-  if (allEvents.length === 0) {
+  if (allEvents.length === 0 && !showingPast) {
     eventList.innerHTML = '<p style="text-align:center; color:#aaa;">No upcoming events right now. Check back soon or <a href="submission.html">submit one</a>!</p>';
-    return;
   }
 
-  // Event count
+  updateCount();
+  renderEvents(getActiveEvents());
+}
+
+function getActiveEvents() {
+  return showingPast ? pastEvents : allEvents;
+}
+
+function updateCount() {
   const existingCount = document.getElementById("event-count");
   if (existingCount) existingCount.remove();
+  const events = getActiveEvents();
   const countEl = document.createElement("p");
   countEl.id = "event-count";
   countEl.style.cssText = "text-align:center; color:#aaa; margin-bottom:1rem;";
-  countEl.textContent = `${allEvents.length} upcoming event${allEvents.length !== 1 ? 's' : ''}`;
+  if (showingPast) {
+    countEl.textContent = `${events.length} past event${events.length !== 1 ? 's' : ''}`;
+  } else {
+    countEl.textContent = `${events.length} upcoming event${events.length !== 1 ? 's' : ''}`;
+  }
   eventList.before(countEl);
-
-  renderEvents(allEvents);
 }
 
 function renderEvents(events) {
   eventList.innerHTML = "";
 
   if (events.length === 0) {
-    eventList.innerHTML = '<p style="text-align:center; color:#aaa;">No events match your search.</p>';
+    eventList.innerHTML = `<p style="text-align:center; color:#aaa;">${showingPast ? 'No past events found.' : 'No events match your search.'}</p>`;
     return;
   }
 
@@ -64,11 +76,16 @@ function renderEvents(events) {
     const div = document.createElement("div");
     div.className = "event";
 
+    if (showingPast) {
+      div.style.opacity = "0.6";
+    }
+
     const dateStr = event.end_date && event.end_date !== event.start_date
       ? `${formatDate(event.start_date)} – ${formatDate(event.end_date)}`
       : formatDate(event.start_date);
 
     div.innerHTML = `
+      ${showingPast ? '<span style="background:#555; color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem; float:right;">PAST</span>' : ''}
       <h3>${event.title}</h3>
       <p><strong>Date:</strong> ${dateStr}</p>
       <p><strong>Location:</strong>
@@ -119,18 +136,28 @@ function renderPagination(events) {
     btn.className = i === currentPage ? "active-page" : "";
     btn.onclick = () => {
       currentPage = i;
-      renderEvents(events);
+      renderEvents(getActiveEvents());
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
     paginationDiv.appendChild(btn);
   }
 }
 
+// Toggle past events
+togglePastBtn.addEventListener("click", () => {
+  showingPast = !showingPast;
+  currentPage = 1;
+  togglePastBtn.textContent = showingPast ? "Show Upcoming Events" : "Show Past Events";
+  updateCount();
+  renderEvents(getActiveEvents());
+});
+
 // Live search
 searchInput.addEventListener("input", e => {
   const query = e.target.value.toLowerCase();
   currentPage = 1;
-  const filtered = allEvents.filter(event =>
+  const events = getActiveEvents();
+  const filtered = events.filter(event =>
     (event.title    || "").toLowerCase().includes(query) ||
     (event.location || "").toLowerCase().includes(query) ||
     (event.tribe    || "").toLowerCase().includes(query) ||
