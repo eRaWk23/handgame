@@ -4,17 +4,25 @@ const supabaseUrl = 'https://atorftwulkabkmhaeeir.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0b3JmdHd1bGthYmttaGFlZWlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDk5MTQsImV4cCI6MjA5NDYyNTkxNH0.SW0OdvAZvAh81PqpLkez1MO8WnMruQxMoCitpcd-PMs';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// ─── State ───────────────────────────────────────────────
 let currentPage = 1;
 const eventsPerPage = 3;
 
 const eventList = document.getElementById("event-list");
 const searchInput = document.getElementById("search");
 const togglePastBtn = document.getElementById("toggle-past");
+const calendarContainer = document.getElementById("calendar-container");
+
+const viewListBtn = document.getElementById("view-list");
+const viewCalendarBtn = document.getElementById("view-calendar");
 
 let allEvents = [];
 let pastEvents = [];
 let showingPast = false;
+let currentView = 'list';
+let calendarDate = new Date();
 
+// ─── Data Loading ────────────────────────────────────────
 async function loadEvents() {
   const { data, error } = await supabase
     .from('events')
@@ -33,33 +41,90 @@ async function loadEvents() {
   allEvents = data.filter(event => new Date(event.start_date) >= today);
   pastEvents = data.filter(event => new Date(event.start_date) < today).reverse();
 
-  if (allEvents.length === 0 && !showingPast) {
-    eventList.innerHTML = '<p style="text-align:center; color:#aaa;">No upcoming events right now. Check back soon or <a href="submission.html">submit one</a>!</p>';
-  }
-
-  updateCount();
-  renderEvents(getActiveEvents());
+  refresh();
 }
 
+// ─── Filtering ───────────────────────────────────────────
 function getActiveEvents() {
   return showingPast ? pastEvents : allEvents;
 }
 
-function updateCount() {
+function getFilteredEvents() {
+  let events = getActiveEvents();
+  const query = searchInput.value.toLowerCase();
+
+  if (query) {
+    events = events.filter(event =>
+      (event.title    || "").toLowerCase().includes(query) ||
+      (event.location || "").toLowerCase().includes(query) ||
+      (event.tribe    || "").toLowerCase().includes(query) ||
+      (event.details  || "").toLowerCase().includes(query)
+    );
+  }
+
+  return events;
+}
+
+function refresh() {
+  const events = getFilteredEvents();
+  updateCount(events);
+
+  if (currentView === 'list') {
+    renderEvents(events);
+  } else if (currentView === 'calendar') {
+    renderCalendar(events);
+  }
+}
+
+// ─── Event Count ─────────────────────────────────────────
+function updateCount(events) {
   const existingCount = document.getElementById("event-count");
   if (existingCount) existingCount.remove();
-  const events = getActiveEvents();
   const countEl = document.createElement("p");
   countEl.id = "event-count";
   countEl.style.cssText = "text-align:center; color:#aaa; margin-bottom:1rem;";
-  if (showingPast) {
-    countEl.textContent = `${events.length} past event${events.length !== 1 ? 's' : ''}`;
-  } else {
-    countEl.textContent = `${events.length} upcoming event${events.length !== 1 ? 's' : ''}`;
+  const label = showingPast ? 'past' : 'upcoming';
+  countEl.textContent = `${events.length} ${label} event${events.length !== 1 ? 's' : ''}`;
+
+  if (currentView === 'list') {
+    eventList.before(countEl);
+  } else if (currentView === 'calendar') {
+    calendarContainer.before(countEl);
   }
-  eventList.before(countEl);
 }
 
+// ─── View Switching ──────────────────────────────────────
+function switchView(view) {
+  currentView = view;
+
+  [viewListBtn, viewCalendarBtn].forEach(btn => {
+    btn.style.opacity = '0.5';
+    btn.style.fontWeight = 'normal';
+  });
+
+  const activeBtn = view === 'list' ? viewListBtn : viewCalendarBtn;
+  activeBtn.style.opacity = '1';
+  activeBtn.style.fontWeight = '700';
+
+  eventList.style.display = view === 'list' ? '' : 'none';
+  calendarContainer.style.display = view === 'calendar' ? '' : 'none';
+
+  const pagination = document.getElementById("pagination");
+  if (pagination) pagination.style.display = view === 'list' ? '' : 'none';
+  const printBtn = document.querySelector('.print-button');
+  if (printBtn) printBtn.style.display = (view === 'list' && window.innerWidth >= 768) ? '' : 'none';
+
+  refresh();
+}
+
+viewListBtn.addEventListener('click', () => switchView('list'));
+viewCalendarBtn.addEventListener('click', () => switchView('calendar'));
+
+viewListBtn.style.opacity = '1';
+viewListBtn.style.fontWeight = '700';
+viewCalendarBtn.style.opacity = '0.5';
+
+// ─── List View ───────────────────────────────────────────
 function renderEvents(events) {
   eventList.innerHTML = "";
 
@@ -155,34 +220,143 @@ function renderPagination(events) {
     btn.className = i === currentPage ? "active-page" : "";
     btn.onclick = () => {
       currentPage = i;
-      renderEvents(getActiveEvents());
+      renderEvents(getFilteredEvents());
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
     paginationDiv.appendChild(btn);
   }
 }
 
-// Toggle past events
+// ─── Calendar View ───────────────────────────────────────
+function renderCalendar(events) {
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+  const monthName = calendarDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
+  const eventDates = {};
+  events.forEach(event => {
+    const start = new Date(event.start_date + 'T00:00:00');
+    const end = event.end_date ? new Date(event.end_date + 'T00:00:00') : start;
+    const d = new Date(start);
+    while (d <= end) {
+      if (d.getMonth() === month && d.getFullYear() === year) {
+        const key = d.getDate();
+        if (!eventDates[key]) eventDates[key] = [];
+        eventDates[key].push(event);
+      }
+      d.setDate(d.getDate() + 1);
+    }
+  });
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
+
+  let html = `
+    <div style="max-width:400px; margin:0 auto; font-family:'JetBrains Mono', monospace;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+        <button id="cal-prev" style="background:none; border:1px solid #555; color:#ddd; padding:4px 12px; border-radius:6px; cursor:pointer; font-size:1.2rem;">◀</button>
+        <strong style="font-size:1.1rem;">${monthName}</strong>
+        <button id="cal-next" style="background:none; border:1px solid #555; color:#ddd; padding:4px 12px; border-radius:6px; cursor:pointer; font-size:1.2rem;">▶</button>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(7, 1fr); text-align:center; gap:2px;">
+        <div style="color:#888; font-size:0.8rem; padding:4px;">Su</div>
+        <div style="color:#888; font-size:0.8rem; padding:4px;">Mo</div>
+        <div style="color:#888; font-size:0.8rem; padding:4px;">Tu</div>
+        <div style="color:#888; font-size:0.8rem; padding:4px;">We</div>
+        <div style="color:#888; font-size:0.8rem; padding:4px;">Th</div>
+        <div style="color:#888; font-size:0.8rem; padding:4px;">Fr</div>
+        <div style="color:#888; font-size:0.8rem; padding:4px;">Sa</div>
+  `;
+
+  for (let i = 0; i < firstDay; i++) {
+    html += `<div style="padding:8px;"></div>`;
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const hasEvent = eventDates[day];
+    const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
+
+    let style = 'padding:6px; border-radius:6px; font-size:0.9rem; position:relative; ';
+    if (isToday) style += 'border:1px solid #00ff88; ';
+    if (hasEvent) style += 'cursor:pointer; background:#2a3a2a; font-weight:700; color:#00ff88; ';
+    else style += 'color:#888; ';
+
+    const dot = hasEvent ? `<span style="display:block; width:5px; height:5px; background:#00ff88; border-radius:50%; margin:2px auto 0;"></span>` : '';
+    const count = hasEvent && hasEvent.length > 1 ? `<span style="font-size:0.6rem; position:absolute; top:2px; right:4px; color:#aaa;">${hasEvent.length}</span>` : '';
+
+    html += `<div class="cal-day" data-day="${day}" style="${style}">${count}${day}${dot}</div>`;
+  }
+
+  html += `</div></div>`;
+  html += `<div id="cal-day-events" style="margin-top:1rem;"></div>`;
+
+  calendarContainer.innerHTML = html;
+
+  document.getElementById('cal-prev').addEventListener('click', () => {
+    calendarDate.setMonth(calendarDate.getMonth() - 1);
+    refresh();
+  });
+  document.getElementById('cal-next').addEventListener('click', () => {
+    calendarDate.setMonth(calendarDate.getMonth() + 1);
+    refresh();
+  });
+
+  calendarContainer.querySelectorAll('.cal-day[data-day]').forEach(cell => {
+    cell.addEventListener('click', () => {
+      const day = parseInt(cell.dataset.day);
+      const dayEvents = eventDates[day];
+      const dayEventsDiv = document.getElementById('cal-day-events');
+
+      if (!dayEvents || dayEvents.length === 0) {
+        dayEventsDiv.innerHTML = `<p style="text-align:center; color:#888;">No events on ${monthName.split(' ')[0]} ${day}.</p>`;
+        return;
+      }
+
+      let evHtml = `<h3 style="text-align:center; margin-bottom:0.5rem;">Events on ${monthName.split(' ')[0]} ${day}</h3>`;
+      dayEvents.forEach(event => {
+        const dateStr = event.end_date && event.end_date !== event.start_date
+          ? `${formatDate(event.start_date)} – ${formatDate(event.end_date)}`
+          : formatDate(event.start_date);
+
+        evHtml += `
+          <div style="border:1px solid #444; border-radius:8px; padding:1rem; margin-bottom:0.75rem;">
+            <h4>${event.title}</h4>
+            <p><strong>Date:</strong> ${dateStr}</p>
+            <p><strong>Location:</strong>
+              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}" target="_blank" rel="noopener">${event.location}</a>
+            </p>
+            ${event.tribe ? `<p><strong>Tribe / Group:</strong> ${event.tribe}</p>` : ''}
+            ${event.details ? `<p><strong>Details:</strong> ${event.details}</p>` : ''}
+            ${event.flyer_url ? `
+              <a href="${event.flyer_url}" target="_blank" rel="noopener" style="display:block; text-align:center;">
+                <img src="${event.flyer_url}" alt="Event flyer for ${event.title}"
+                  style="max-width:250px; border-radius:8px; border:2px solid #999; margin:10px auto; display:block;" />
+              </a>
+              <p style="font-size:0.8rem; color:#aaa; text-align:center;">Tap flyer to view full size</p>
+            ` : ''}
+          </div>
+        `;
+      });
+
+      dayEventsDiv.innerHTML = evHtml;
+    });
+  });
+}
+
+// ─── Toggle Past Events ─────────────────────────────────
 togglePastBtn.addEventListener("click", () => {
   showingPast = !showingPast;
   currentPage = 1;
   togglePastBtn.textContent = showingPast ? "Show Upcoming Events" : "Show Past Events";
-  updateCount();
-  renderEvents(getActiveEvents());
+  refresh();
 });
 
-// Live search
-searchInput.addEventListener("input", e => {
-  const query = e.target.value.toLowerCase();
+// ─── Search ──────────────────────────────────────────────
+searchInput.addEventListener("input", () => {
   currentPage = 1;
-  const events = getActiveEvents();
-  const filtered = events.filter(event =>
-    (event.title    || "").toLowerCase().includes(query) ||
-    (event.location || "").toLowerCase().includes(query) ||
-    (event.tribe    || "").toLowerCase().includes(query) ||
-    (event.details  || "").toLowerCase().includes(query)
-  );
-  renderEvents(filtered);
+  refresh();
 });
 
+// ─── Init ────────────────────────────────────────────────
 window.addEventListener("DOMContentLoaded", loadEvents);

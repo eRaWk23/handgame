@@ -44,6 +44,16 @@
     <button id="toggle-past" style="padding:0.4rem 1rem; cursor:pointer;">Show Past Events</button>
   </div>
 
+  <!-- View toggle buttons -->
+  <div style="display:flex; gap:0.5rem; justify-content:center; margin-bottom:1rem;">
+    <button class="view-btn active" id="view-list" style="padding:0.4rem 1rem; cursor:pointer;">📋 List</button>
+    <button class="view-btn" id="view-calendar" style="padding:0.4rem 1rem; cursor:pointer;">📅 Calendar</button>
+  </div>
+
+  <!-- Calendar view -->
+  <div id="calendar-container" style="display:none; margin-bottom:1.5rem;"></div>
+
+  <!-- List view -->
   <div id="event-list"></div>
 
   <div style="text-align:center; margin-top:1rem;">
@@ -52,7 +62,7 @@
   <br>
 </main>
 
-<!-- Event detail modal — required by script.js -->
+<!-- Event detail modal -->
 <div id="event-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:1000; align-items:center; justify-content:center;">
   <div style="background:#1e1e1e; border-radius:12px; padding:2rem; max-width:600px; width:90%; position:relative; max-height:90vh; overflow-y:auto;">
     <button class="close-button" aria-label="Close modal" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; line-height:1;">✕</button>
@@ -68,7 +78,6 @@
     <p>&copy; 2026 HandGame Community | Hosted on GitHub Pages</p>
     <p>For edits and updates contact: <a href="mailto:edesoto18@gmail.com">edesoto18@gmail.com</a></p>
   </div>
-  <!-- single back-to-top button -->
   <button id="back-to-top" title="Back to top" style="display:none;">↑ Top</button>
 </footer>
 
@@ -91,14 +100,12 @@
   }
 
   window.addEventListener('DOMContentLoaded', () => {
-    // Restore saved theme or respect system preference
     const stored = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     if (stored === 'light' || (!stored && !prefersDark)) {
       document.body.classList.add('light-mode');
     }
 
-    // Modal wiring
     const modal   = document.getElementById('event-modal');
     const closeBtn = document.querySelector('.close-button');
     if (modal && closeBtn) {
@@ -110,7 +117,6 @@
     }
   });
 
-  // Back-to-top
   const topBtn = document.getElementById('back-to-top');
   window.addEventListener('scroll', () => {
     if (topBtn) topBtn.style.display = window.scrollY > 300 ? 'block' : 'none';
