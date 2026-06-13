@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact - Handgame.info</title>
+  <meta name="description" content="Get in touch with the Handgame.info community. Submit corrections, suggestions, or questions." />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .contact-form {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+    .contact-form label {
+      display: block;
+      text-align: left;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      margin-top: 1rem;
+      font-family: 'Roboto Slab', serif;
+      color: #e8ddd0;
+    }
+    body.light-mode .contact-form label {
+      color: #2a2018;
+    }
+    .contact-form input[type="text"],
+    .contact-form input[type="email"],
+    .contact-form select,
+    .contact-form textarea {
+      width: 100%;
+      padding: 0.7rem;
+      border: 1px solid #4a3c30;
+      border-radius: 8px;
+      background: #1c1612;
+      color: #f0e6d6;
+      font-family: 'Lora', serif;
+      font-size: 1rem;
+      box-sizing: border-box;
+      transition: border-color 0.2s ease;
+    }
+    body.light-mode .contact-form input[type="text"],
+    body.light-mode .contact-form input[type="email"],
+    body.light-mode .contact-form select,
+    body.light-mode .contact-form textarea {
+      background: #fffcf5;
+      color: #2a2018;
+      border: 1px solid #d9cbb8;
+    }
+    .contact-form input:focus,
+    .contact-form select:focus,
+    .contact-form textarea:focus {
+      outline: none;
+      border-color: #3dbead;
+      box-shadow: 0 0 6px rgba(61, 190, 173, 0.3);
+    }
+    .contact-form textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    .contact-form .required-star {
+      color: #d4723c;
+    }
+    .contact-form .form-intro {
+      color: #a89888;
+      margin-bottom: 0.5rem;
+    }
+    body.light-mode .contact-form .form-intro {
+      color: #6b5e52;
+    }
+    .contact-form button[type="submit"] {
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 0.85rem;
+      font-size: 1.15rem;
+      background: linear-gradient(135deg, #d4723c 0%, #b5453a 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Roboto Slab', serif;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(212, 114, 60, 0.4);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .contact-form button[type="submit"]:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(212, 114, 60, 0.6);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container header-flex">
+    <h1 style="font-size:2.4rem;">Handgame.info</h1>
+    <nav class="navbar">
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html" class="active">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <form class="contact-form" action="https://formsubmit.co/contact@handgame.info" method="POST">
+    <h2>Contact Us</h2>
+    <p class="form-intro">Have a correction, suggestion, or question? We'd love to hear from you.</p>
+
+    <!-- FormSubmit config -->
+    <input type="hidden" name="_subject" value="New message from Handgame.info">
+    <input type="hidden" name="_captcha" value="true">
+    <input type="hidden" name="_next" value="https://handgame.info/contact-thanks.html">
+    <input type="text" name="_honey" style="display:none">
+
+    <label for="name">Your Name <span class="required-star">*</span></label>
+    <input id="name" type="text" name="name" placeholder="e.g. John Doe" required />
+
+    <label for="email">Your Email <span class="required-star">*</span></label>
+    <input id="email" type="email" name="email" placeholder="e.g. you@example.com" required />
+
+    <label for="type">What's this about?</label>
+    <select id="type" name="type">
+      <option value="general">General Question</option>
+      <option value="correction">Event Correction</option>
+      <option value="suggestion">Suggestion or Feedback</option>
+      <option value="help">I Need Help</option>
+      <option value="volunteer">I Want to Help</option>
+    </select>
+
+    <label for="message">Message <span class="required-star">*</span></label>
+    <textarea id="message" name="message" placeholder="Tell us what's on your mind..." required></textarea>
+
+    <button type="submit">Send Message</button>
+  </form>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="toggle-container">
+      <button class="toggle-button" onclick="toggleTheme()">☀️ / 🌙 Light/Dark Mode</button>
+    </div>
+    <p>&copy; 2026 Handgame.info Community</p>
+  </div>
+</footer>
+
+<script>
+  function toggleTheme() {
+    document.body.classList.toggle('light-mode');
+    localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const storedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (storedTheme === 'light' || (!storedTheme && !prefersDark)) {
+      document.body.classList.add('light-mode');
+    }
+  });
+</script>
+
+</body>
+</html>

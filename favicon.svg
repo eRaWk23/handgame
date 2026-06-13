@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="12" fill="#0d0a08"/>
+  <!-- Left stick - plain (unmarked bone) -->
+  <rect x="16" y="8" width="8" height="48" rx="4" fill="#f0e6d6" transform="rotate(-15, 20, 32)"/>
+  <!-- Right stick - marked bone with stripe -->
+  <rect x="40" y="8" width="8" height="48" rx="4" fill="#f0e6d6" transform="rotate(15, 44, 32)"/>
+  <rect x="40" y="24" width="8" height="10" rx="0" fill="#d4723c" transform="rotate(15, 44, 32)"/>
+  <!-- Subtle turquoise accent at base -->
+  <circle cx="32" cy="56" r="3" fill="#3dbead" opacity="0.7"/>
+</svg>

@@ -1,53 +1,75 @@
 /* ==================================================
    Google Fonts Import
    ================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&family=Lora:wght@400;500;600&display=swap');
 
 /* ==================================================
    Root Theme and Global Settings
    ================================================== */
 :root {
   color-scheme: light dark;
+  --bg-deep: #0d0a08;
+  --bg-card: #1c1612;
+  --bg-card-hover: #251e18;
+  --text-primary: #f0e6d6;
+  --text-secondary: #a89888;
+  --accent-turquoise: #3dbead;
+  --accent-sunset: #d4723c;
+  --accent-fire: #e6a530;
+  --accent-red-rock: #b5453a;
+  --accent-sage: #7a9a6d;
+  --border-earth: #332a22;
+  --border-warm: #4a3c30;
+
+  /* Light mode */
+  --light-bg: #f7f0e5;
+  --light-card: #fffcf5;
+  --light-text: #1c1612;
+  --light-text-secondary: #6b5e52;
+  --light-border: #d9cbb8;
 }
 
 /* ==================================================
-   Base Styles for Body and Typography
+   Base Styles
    ================================================== */
 body {
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Lora', serif;
   margin: 0;
   padding: 0;
-  background: #121212;
-  color: #e0e0e0;
+  background: var(--bg-deep);
+  color: var(--text-primary);
   font-size: 1.1rem;
   line-height: 1.6;
   transition: background 0.3s ease, color 0.3s ease;
 }
 
 body.light-mode {
-  background: #f0f0f0;
-  color: #111;
+  background: var(--light-bg);
+  color: var(--light-text);
 }
 
 /* ==================================================
    Typography & Headings
    ================================================== */
 h1 {
+  font-family: 'Roboto Slab', serif;
   font-size: 3.5rem;
   font-weight: 800;
   text-align: center;
-  color: #ffdb6e;
-  background-color: #2c1a00;
-  padding: 1rem;
+  color: var(--accent-fire);
+  background: linear-gradient(180deg, #1a0f05 0%, #2c1a00 50%, #1a0f05 100%);
+  padding: 1.2rem;
   border-radius: 12px;
+  border-top: 3px solid var(--accent-sunset);
+  border-bottom: 3px solid var(--accent-sunset);
   box-shadow:
     0 0 0.5rem #000 inset,
-    0 0 8px rgba(255, 219, 110, 0.8),
-    0 0 12px rgba(255, 165, 0, 0.6);
+    0 0 12px rgba(230, 165, 48, 0.5),
+    0 0 20px rgba(212, 114, 60, 0.3);
   text-shadow:
     1px 1px 2px #000,
-    0 0 6px rgba(255, 165, 0, 0.9),
-    0 0 10px rgba(255, 165, 0, 0.5);
+    0 0 8px rgba(230, 165, 48, 0.8),
+    0 0 16px rgba(212, 114, 60, 0.4);
   letter-spacing: 2px;
   margin-top: 1rem;
   margin-bottom: 1.5rem;
@@ -57,6 +79,29 @@ h1 {
 header h1 {
   font-size: 2.4rem;
   margin-bottom: 0.5rem;
+}
+
+h2 {
+  font-family: 'Roboto Slab', serif;
+  color: var(--accent-fire);
+  border-bottom: 2px solid var(--accent-sunset);
+  padding-bottom: 0.4rem;
+  display: inline-block;
+}
+
+body.light-mode h2 {
+  color: #8a5a1e;
+  border-bottom-color: #c4956a;
+}
+
+h3, h4 {
+  font-family: 'Roboto Slab', serif;
+  color: var(--text-primary);
+}
+
+body.light-mode h3,
+body.light-mode h4 {
+  color: var(--light-text);
 }
 
 /* ==================================================
@@ -82,28 +127,60 @@ main {
 header > .container,
 footer > .container {
   border-radius: 10px;
-  background-color: #1e1e1e;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(180deg, var(--bg-card) 0%, #140f0b 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   padding: 1rem;
+  border: 1px solid var(--border-earth);
 }
 
 body.light-mode header > .container,
 body.light-mode footer > .container {
-  background-color: #ffffff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  background: linear-gradient(180deg, var(--light-card) 0%, #f0e8da 100%);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--light-border);
 }
 
 body.light-mode footer {
-  background: #f0f0f0;
-  color: #111;
+  background: var(--light-bg);
+  color: var(--light-text);
+}
+
+footer p {
+  color: var(--text-secondary);
+}
+
+body.light-mode footer p {
+  color: var(--light-text-secondary);
+}
+
+footer a {
+  color: var(--accent-turquoise);
+  text-decoration: none;
+}
+
+footer a:hover {
+  color: #5cd4cb;
+  text-decoration: underline;
+}
+
+body.light-mode footer a {
+  color: #2e8a84;
 }
 
 /* ==================================================
-   Navigation Bar Styles
+   Navigation Bar
    ================================================== */
 .navbar {
-  background-color: #1e1e1e;
+  background-color: transparent;
   padding: 0.75rem 1rem;
+}
+
+.navbar p {
+  color: var(--text-secondary);
+}
+
+body.light-mode .navbar p {
+  color: var(--light-text-secondary);
 }
 
 .nav-links {
@@ -117,36 +194,36 @@ body.light-mode footer {
 }
 
 .nav-links li a {
-  color: white;
+  color: var(--text-primary);
   font-weight: bold;
   font-size: 1.1rem;
   padding: 0.5rem 1rem;
   border-radius: 6px;
   transition: background-color 0.25s ease, color 0.25s ease;
   text-decoration: none;
+  border-bottom: 2px solid transparent;
 }
 
 .nav-links li a:hover {
-  background-color: rgb(201, 201, 232);
-  color: #111;
+  background-color: var(--accent-sunset);
+  color: #fff;
 }
 
-body.light-mode .navbar {
-  background-color: white;
-  color: black;
+.nav-links li a.active {
+  border-bottom: 2px solid var(--accent-turquoise);
 }
 
 body.light-mode .nav-links li a {
-  color: #111;
+  color: var(--light-text);
 }
 
 body.light-mode .nav-links li a:hover {
-  background-color: #ccc;
-  color: black;
+  background-color: var(--accent-sunset);
+  color: #fff;
 }
 
 /* ==================================================
-   Search Bar Input
+   Search Bar
    ================================================== */
 #search {
   margin: 1rem auto 2rem auto;
@@ -154,33 +231,78 @@ body.light-mode .nav-links li a:hover {
   width: 100%;
   max-width: 600px;
   display: block;
+  font-family: 'Lora', serif;
   font-size: 1.25rem;
-  border: 2px solid #444;
+  border: 2px solid var(--border-warm);
   border-radius: 6px;
-  background-color: #1e1e1e;
-  color: #e0e0e0;
+  background-color: var(--bg-card);
+  color: var(--text-primary);
   box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 
+#search::placeholder {
+  color: var(--text-secondary);
+}
+
+#search:focus {
+  outline: none;
+  border-color: var(--accent-turquoise);
+  box-shadow: 0 0 8px rgba(61, 190, 173, 0.3);
+}
+
 body.light-mode #search {
-  background-color: #ffffff;
-  color: #111;
-  border: 2px solid #aaa;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  background-color: var(--light-card);
+  color: var(--light-text);
+  border: 2px solid var(--light-border);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+}
+
+body.light-mode #search:focus {
+  border-color: #2e8a84;
 }
 
 /* ==================================================
-   Unified Button Styling
+   Buttons
    ================================================== */
 button,
 .print-button,
-.submit-button,
 .toggle-button,
 .toggle-details-button,
 .toggle-more-button,
 .flyer-link {
+  font-family: 'Roboto Slab', serif;
   font-size: 1.1rem;
   font-weight: bold;
+  padding: 0.75rem 1.5rem;
+  margin: 0.5rem auto;
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid var(--border-warm);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.25s ease, transform 0.2s ease, border-color 0.25s ease;
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+button:hover,
+.print-button:hover,
+.toggle-button:hover,
+.toggle-details-button:hover,
+.toggle-more-button:hover,
+.flyer-link:hover {
+  background-color: var(--accent-sunset);
+  color: #fff;
+  border-color: var(--accent-sunset);
+  transform: translateY(-1px);
+}
+
+.submit-button {
+  font-family: 'Roboto Slab', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
   padding: 0.75rem 1.5rem;
   margin: 0.5rem auto;
   display: inline-block;
@@ -189,91 +311,105 @@ button,
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.25s ease, transform 0.2s ease;
-  background-color: #444;
-  color: white;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  background: linear-gradient(135deg, var(--accent-sunset) 0%, var(--accent-red-rock) 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(212, 114, 60, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-button:hover,
-.print-button:hover,
-.submit-button:hover,
-.toggle-button:hover,
-.toggle-details-button:hover,
-.toggle-more-button:hover,
-.flyer-link:hover {
-  background-color: rgb(201, 201, 232);
-  color: #111;
-  transform: translateY(-1px);
+.submit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(212, 114, 60, 0.6);
 }
 
 body.light-mode button,
 body.light-mode .print-button,
-body.light-mode .submit-button,
 body.light-mode .toggle-button,
 body.light-mode .toggle-details-button,
 body.light-mode .toggle-more-button,
 body.light-mode .flyer-link {
-  background-color: #e9e9e9;
-  color: #111;
-  border: 1px solid #bbb;
+  background-color: var(--light-card);
+  color: var(--light-text);
+  border: 1px solid var(--light-border);
 }
 
 body.light-mode button:hover,
 body.light-mode .print-button:hover,
-body.light-mode .submit-button:hover,
 body.light-mode .toggle-button:hover,
 body.light-mode .toggle-details-button:hover,
 body.light-mode .toggle-more-button:hover,
 body.light-mode .flyer-link:hover {
-  background-color: #ccc;
-  color: black;
+  background-color: var(--accent-sunset);
+  color: #fff;
+  border-color: var(--accent-sunset);
 }
 
 /* ==================================================
    Event Cards
    ================================================== */
 .event {
-  background: #1e1e1e;
-  border: 1px solid #333;
+  background: var(--bg-card);
+  border: 1px solid var(--border-earth);
+  border-left: 4px solid var(--accent-sunset);
   border-radius: 10px;
-  padding: 1rem;
+  padding: 1.25rem;
   margin-bottom: 3rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
   font-family: 'Roboto Slab', serif;
   text-align: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.event:hover {
+  border-left-color: var(--accent-turquoise);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
 body.light-mode .event {
-  background: #ffffff;
-  border: 1px solid #bbb;
-  color: #111;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  background: var(--light-card);
+  border: 1px solid var(--light-border);
+  border-left: 4px solid var(--accent-sunset);
+  color: var(--light-text);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+}
+
+body.light-mode .event:hover {
+  border-left-color: #2e8a84;
 }
 
 .event a {
-  color: #4dabf7;
+  color: var(--accent-turquoise);
   text-decoration: none;
   transition: color 0.2s ease, opacity 0.2s ease;
 }
 
 .event a:hover {
-  color: #90caf9;
+  color: #5cd4cb;
   opacity: 0.85;
   text-decoration: underline;
 }
 
 body.light-mode .event a {
-  color: #007acc;
+  color: #2e8a84;
 }
 
 body.light-mode .event a:hover {
-  color: #005999;
+  color: #1d6b66;
 }
 
 .event p {
   word-wrap: break-word;
   white-space: normal;
+}
+
+.event h3 {
+  color: var(--accent-fire);
+  margin-bottom: 0.5rem;
+  font-size: 1.3rem;
+}
+
+body.light-mode .event h3 {
+  color: #8a5a1e;
 }
 
 .event img {
@@ -311,7 +447,6 @@ body.light-mode .event a:hover {
   max-height: 300px;
   display: block;
   margin-top: 0.5rem;
-  display: block;
   margin-left: auto;
   margin-right: auto;
   border-radius: 8px;
@@ -336,7 +471,7 @@ body.light-mode .event a:hover {
 }
 
 /* ==================================================
-   Utility Classes and Media Queries
+   Header Image
    ================================================== */
 .header-img {
   width: 100%;
@@ -349,6 +484,13 @@ body.light-mode .event a:hover {
   display: block;
   margin: 0 auto;
   box-sizing: border-box;
+  border: 2px solid var(--border-warm);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+body.light-mode .header-img {
+  border: 2px solid var(--light-border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .header-flex {
@@ -359,6 +501,9 @@ body.light-mode .event a:hover {
   text-align: center;
 }
 
+/* ==================================================
+   Misc
+   ================================================== */
 main section ul {
   list-style-position: inside;
   padding: 0;
@@ -370,22 +515,26 @@ main section ul li {
 }
 
 .mark {
-  background-color: rgb(43, 167, 192);
+  background-color: var(--accent-turquoise);
   color: #000;
   padding: 0 2px;
   border-radius: 3px;
 }
 
+/* ==================================================
+   Back to Top
+   ================================================== */
 #back-to-top {
   display: none;
   position: fixed;
   bottom: 40px;
   right: 30px;
   z-index: 999;
-  background-color: #555;
-  color: #fff;
+  background-color: var(--bg-card);
+  color: var(--text-primary);
   padding: 0.7rem 1rem;
   font-size: 1rem;
+  border: 1px solid var(--border-warm);
   border-radius: 6px;
   cursor: pointer;
   box-shadow: 0 2px 5px rgba(0,0,0,0.4);
@@ -393,19 +542,25 @@ main section ul li {
 }
 
 #back-to-top:hover {
-  background-color: rgb(201, 201, 232);
+  background-color: var(--accent-sunset);
+  color: #fff;
   transform: translateY(-2px);
 }
 
 body.light-mode #back-to-top {
-  background-color: #555;
-  color: #fff;
+  background-color: var(--light-card);
+  color: var(--light-text);
+  border: 1px solid var(--light-border);
 }
 
 body.light-mode #back-to-top:hover {
-  background-color: #444;
+  background-color: var(--accent-sunset);
+  color: #fff;
 }
 
+/* ==================================================
+   Responsive
+   ================================================== */
 @media (max-width: 767px) {
   .toggle-details-button,
   .event-details,
@@ -424,11 +579,10 @@ body.light-mode #back-to-top:hover {
     display: block !important;
     text-align: center;
     font-size: 0.9rem;
-    color: #888;
+    color: var(--text-secondary);
     margin-top: 0.5rem;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
@@ -438,20 +592,14 @@ body.light-mode #back-to-top:hover {
   }
 }
 
+/* ==================================================
+   Print
+   ================================================== */
 @media print {
-  header,
-  nav,
-  footer,
-  #search,
-  #back-to-top,
-  .toggle-button,
-  .toggle-details-button,
-  .flyer-img,
-  .flyer-link,
-  .flyer-error,
-  .countdown,
-  .event-details,
-  .submit-container {
+  header, nav, footer, #search, #back-to-top,
+  .toggle-button, .toggle-details-button,
+  .flyer-img, .flyer-link, .flyer-error,
+  .countdown, .event-details, .submit-container {
     display: none !important;
   }
   body {
@@ -465,16 +613,13 @@ body.light-mode #back-to-top:hover {
     margin-bottom: 2rem;
     page-break-inside: avoid;
   }
-  .event h2 {
-    font-size: 18pt;
-    margin-bottom: 0.5rem;
-  }
-  .event p {
-    font-size: 14pt;
-    margin: 0.2rem 0;
-  }
+  .event h2 { font-size: 18pt; margin-bottom: 0.5rem; }
+  .event p { font-size: 14pt; margin: 0.2rem 0; }
 }
 
+/* ==================================================
+   Animations
+   ================================================== */
 @keyframes glowFade {
   0% {
     opacity: 0;
@@ -487,9 +632,13 @@ body.light-mode #back-to-top:hover {
   }
 }
 
+/* ==================================================
+   Event Card (alternate style)
+   ================================================== */
 .event-card {
-  background: #1e1e1e;
-  border: 1px solid #333;
+  background: var(--bg-card);
+  border: 1px solid var(--border-earth);
+  border-left: 4px solid var(--accent-sunset);
   border-radius: 10px;
   padding: 1rem;
   margin-bottom: 2rem;
@@ -503,69 +652,59 @@ body.light-mode #back-to-top:hover {
 .event-card:hover {
   transform: scale(1.01);
   box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  border-left-color: var(--accent-turquoise);
 }
 
 body.light-mode .event-card {
-  background: #ffffff;
-  border: 1px solid #bbb;
-  color: #111;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  background: var(--light-card);
+  border: 1px solid var(--light-border);
+  border-left: 4px solid var(--accent-sunset);
+  color: var(--light-text);
 }
 
 body.light-mode .event-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-/*
-.modal-content {
-  background-color: #1e1e1e;
-  margin: 5% auto;
-  padding: 20px;
-  border: 1px solid #888;
-  width: 90%;
-  max-width: 500px;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-  text-align: center;
+  border-left-color: #2e8a84;
 }
 
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: rgba(0, 0, 0, 0.85);
-}
-
-#modal-flyer img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 6px;
-}
-*/
-
+/* ==================================================
+   Pagination
+   ================================================== */
 #pagination button {
-  background-color: #333;
-  color: #fff;
+  background-color: var(--bg-card);
+  color: var(--text-primary);
   font-weight: bold;
   margin: 5px;
   padding: 8px 14px;
-  border: 2px solid #888;
+  border: 2px solid var(--border-warm);
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
 #pagination button:hover {
-  background-color: #555;
+  background-color: var(--accent-sunset);
+  color: #fff;
+  border-color: var(--accent-sunset);
 }
 
 #pagination button.active-page {
-  background-color: #fff;
-  color: #000;
-  border: 2px solid #ccc;
+  background-color: var(--accent-sunset);
+  color: #fff;
+  border-color: var(--accent-fire);
 }
 
+body.light-mode #pagination button {
+  background-color: var(--light-card);
+  color: var(--light-text);
+  border: 2px solid var(--light-border);
+}
+
+body.light-mode #pagination button:hover {
+  background-color: var(--accent-sunset);
+  color: #fff;
+}
+
+body.light-mode #pagination button.active-page {
+  background-color: var(--accent-sunset);
+  color: #fff;
+}
