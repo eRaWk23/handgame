@@ -7,6 +7,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // ─── State ───────────────────────────────────────────────
 let currentPage = 1;
 const eventsPerPage = 3;
+const REPORT_THRESHOLD = 3;
 
 const eventList = document.getElementById("event-list");
 const searchInput = document.getElementById("search");
@@ -21,6 +22,25 @@ let pastEvents = [];
 let showingPast = false;
 let currentView = 'list';
 let calendarDate = new Date();
+
+// ─── Report tracking (localStorage) ─────────────────────
+function getReportedIds() {
+  try {
+    return JSON.parse(localStorage.getItem('reported_events') || '[]');
+  } catch { return []; }
+}
+
+function markReported(id) {
+  const reported = getReportedIds();
+  if (!reported.includes(id)) {
+    reported.push(id);
+    localStorage.setItem('reported_events', JSON.stringify(reported));
+  }
+}
+
+function hasReported(id) {
+  return getReportedIds().includes(id);
+}
 
 // ─── Data Loading ────────────────────────────────────────
 async function loadEvents() {
@@ -38,8 +58,11 @@ async function loadEvents() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  allEvents = data.filter(event => new Date(event.start_date) >= today);
-  pastEvents = data.filter(event => new Date(event.start_date) < today).reverse();
+  // Filter out reported events (report_count >= threshold)
+  const visible = data.filter(event => (event.report_count || 0) < REPORT_THRESHOLD);
+
+  allEvents = visible.filter(event => new Date(event.start_date) >= today);
+  pastEvents = visible.filter(event => new Date(event.start_date) < today).reverse();
 
   refresh();
 }
@@ -124,6 +147,52 @@ viewListBtn.style.opacity = '1';
 viewListBtn.style.fontWeight = '700';
 viewCalendarBtn.style.opacity = '0.5';
 
+// ─── Report Event ────────────────────────────────────────
+async function reportEvent(eventId, btn) {
+  if (hasReported(eventId)) {
+    btn.textContent = 'Already reported';
+    btn.disabled = true;
+    return;
+  }
+
+  btn.textContent = 'Reporting…';
+  btn.disabled = true;
+
+  // Get current count
+  const { data, error: fetchErr } = await supabase
+    .from('events')
+    .select('report_count')
+    .eq('id', eventId)
+    .single();
+
+  if (fetchErr) {
+    btn.textContent = '🚩 Report';
+    btn.disabled = false;
+    return;
+  }
+
+  const newCount = (data.report_count || 0) + 1;
+
+  const { error: updateErr } = await supabase
+    .from('events')
+    .update({ report_count: newCount })
+    .eq('id', eventId);
+
+  if (updateErr) {
+    btn.textContent = '🚩 Report';
+    btn.disabled = false;
+    return;
+  }
+
+  markReported(eventId);
+  btn.textContent = '✓ Reported';
+
+  // If threshold reached, remove from view
+  if (newCount >= REPORT_THRESHOLD) {
+    setTimeout(() => loadEvents(), 1000);
+  }
+}
+
 // ─── List View ───────────────────────────────────────────
 function renderEvents(events) {
   eventList.innerHTML = "";
@@ -149,6 +218,8 @@ function renderEvents(events) {
       ? `${formatDate(event.start_date)} – ${formatDate(event.end_date)}`
       : formatDate(event.start_date);
 
+    const alreadyReported = hasReported(event.id);
+
     div.innerHTML = `
       ${showingPast ? '<span style="background:#555; color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem; float:right;">PAST</span>' : ''}
       <h3>${event.title}</h3>
@@ -167,13 +238,15 @@ function renderEvents(events) {
         </a>
         <p style="font-size:0.8rem; color:#aaa;">Tap flyer to view full size</p>
       ` : '<p><em>No flyer available</em></p>'}
-      <div style="text-align:right; margin-top:0.5rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
         <button class="share-btn" data-title="${event.title}" data-id="${event.id}" style="background:none; border:1px solid #666; color:#aaa; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:0.8rem;">📤 Share</button>
+        <button class="report-btn" data-id="${event.id}" style="background:none; border:1px solid #555; color:#888; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:0.8rem;" ${alreadyReported ? 'disabled' : ''}>${alreadyReported ? '✓ Reported' : '🚩 Report'}</button>
       </div>
     `;
 
     eventList.appendChild(div);
 
+    // Share button
     div.querySelector('.share-btn').addEventListener('click', async (e) => {
       const btn = e.currentTarget;
       const title = btn.dataset.title;
@@ -188,6 +261,13 @@ function renderEvents(events) {
         btn.textContent = '✅ Link copied!';
         setTimeout(() => { btn.textContent = '📤 Share'; }, 2000);
       }
+    });
+
+    // Report button
+    div.querySelector('.report-btn').addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      const id = btn.dataset.id;
+      reportEvent(id, btn);
     });
   });
 

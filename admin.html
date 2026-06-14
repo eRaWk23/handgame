@@ -4,20 +4,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Handgame Admin</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="stylesheet" href="style.css" />
   <style>
     .admin-wrap { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
     .admin-event { background: #1e1e1e; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
     .admin-event h3 { margin: 0 0 0.5rem; color: #ffdb6e; }
     .admin-event p { margin: 0.2rem 0; font-size: 0.9rem; }
-    .admin-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+    .admin-actions { display: flex; gap: 0.5rem; flex-shrink: 0; flex-wrap: wrap; }
     .approve-btn { background: #4caf50; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-weight: bold; }
     .delete-btn { background: #f44336; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    .clear-btn { background: #2196F3; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-weight: bold; }
     .approve-btn:hover { background: #43a047; }
     .delete-btn:hover { background: #e53935; }
+    .clear-btn:hover { background: #1976D2; }
     .badge { display: inline-block; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 20px; margin-left: 0.5rem; }
     .badge-pending { background: #f5a623; color: #000; }
     .badge-approved { background: #4caf50; color: #fff; }
+    .badge-reported { background: #f44336; color: #fff; }
     #login-wrap { max-width: 400px; margin: 5rem auto; text-align: center; }
     #login-wrap input { width: 100%; padding: 0.75rem; font-size: 1rem; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; margin-bottom: 1rem; box-sizing: border-box; }
     #login-wrap button { width: 100%; padding: 0.75rem; background: #ffdb6e; color: #111; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
@@ -25,6 +29,7 @@
     .filter-bar { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
     .filter-btn { padding: 0.4rem 1rem; border-radius: 20px; border: 1px solid #555; background: transparent; color: #ccc; cursor: pointer; }
     .filter-btn.active { background: #ffdb6e; color: #111; border-color: #ffdb6e; font-weight: bold; }
+    .report-count { font-size: 0.8rem; color: #f44336; margin-top: 0.25rem; }
   </style>
 </head>
 <body>
@@ -47,9 +52,9 @@
     </div>
 
     <div class="filter-bar">
-      <button class="filter-btn active" onclick="setFilter('pending', this)">Pending</button>
-      <button class="filter-btn" onclick="setFilter('approved', this)">Approved</button>
-      <button class="filter-btn" onclick="setFilter('all', this)">All</button>
+      <button class="filter-btn" onclick="setFilter('reported', this)">🚩 Reported</button>
+      <button class="filter-btn" onclick="setFilter('pending', this)">Pending</button>
+      <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
     </div>
 
     <div id="admin-event-list"><p>Loading...</p></div>
@@ -63,10 +68,9 @@
   const SUPABASE_ANON_KEY = 'sb_publishable_0CKKNOHPd3Yd6bDfkEuHlA_YgS9bJvF';
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  let currentFilter = 'pending';
+  let currentFilter = 'all';
   let allEvents = [];
 
-  // Check if already logged in
   const { data: { session } } = await supabase.auth.getSession();
   if (session) showPanel();
 
@@ -127,6 +131,7 @@
     const list = document.getElementById('admin-event-list');
     let filtered = allEvents;
     if (currentFilter === 'pending')  filtered = allEvents.filter(e => !e.approved);
+    if (currentFilter === 'reported') filtered = allEvents.filter(e => (e.report_count || 0) > 0);
     if (currentFilter === 'approved') filtered = allEvents.filter(e => e.approved);
 
     if (filtered.length === 0) {
@@ -134,29 +139,45 @@
       return;
     }
 
-    list.innerHTML = filtered.map(event => `
-      <div class="admin-event">
-        <div>
-          <h3>${event.title} <span class="badge ${event.approved ? 'badge-approved' : 'badge-pending'}">${event.approved ? 'Approved' : 'Pending'}</span></h3>
-          <p><strong>Date:</strong> ${event.start_date}${event.end_date ? ' – ' + event.end_date : ''}</p>
-          <p><strong>Location:</strong> ${event.location}</p>
-          ${event.tribe ? `<p><strong>Tribe:</strong> ${event.tribe}</p>` : ''}
-          ${event.details ? `<p><strong>Details:</strong> ${event.details}</p>` : ''}
-          ${event.flyer_url ? `<a href="${event.flyer_url}" target="_blank"><img src="${event.flyer_url}" style="max-width:150px; border-radius:6px; margin-top:0.5rem;" /></a>` : '<p><em>No flyer</em></p>'}
-          <p style="font-size:0.75rem; color:#666;">Submitted: ${new Date(event.created_at).toLocaleString()}</p>
+    list.innerHTML = filtered.map(event => {
+      const reports = event.report_count || 0;
+      const badges = [];
+      if (!event.approved) badges.push('<span class="badge badge-pending">Pending</span>');
+      if (event.approved) badges.push('<span class="badge badge-approved">Approved</span>');
+      if (reports > 0) badges.push(`<span class="badge badge-reported">🚩 ${reports} report${reports !== 1 ? 's' : ''}</span>`);
+
+      return `
+        <div class="admin-event" style="${reports >= 3 ? 'border-left: 3px solid #f44336;' : ''}">
+          <div>
+            <h3>${event.title} ${badges.join('')}</h3>
+            <p><strong>Date:</strong> ${event.start_date}${event.end_date ? ' – ' + event.end_date : ''}</p>
+            <p><strong>Location:</strong> ${event.location}</p>
+            ${event.tribe ? `<p><strong>Tribe:</strong> ${event.tribe}</p>` : ''}
+            ${event.details ? `<p><strong>Details:</strong> ${event.details}</p>` : ''}
+            ${event.flyer_url ? `<a href="${event.flyer_url}" target="_blank"><img src="${event.flyer_url}" style="max-width:150px; border-radius:6px; margin-top:0.5rem;" /></a>` : '<p><em>No flyer</em></p>'}
+            <p style="font-size:0.75rem; color:#666;">Submitted: ${new Date(event.created_at).toLocaleString()}</p>
+          </div>
+          <div class="admin-actions">
+            ${!event.approved ? `<button class="approve-btn" onclick="approveEvent('${event.id}')">✅ Approve</button>` : ''}
+            ${reports > 0 ? `<button class="clear-btn" onclick="clearReports('${event.id}')">🔄 Clear Reports</button>` : ''}
+            <button class="delete-btn" onclick="deleteEvent('${event.id}')">🗑 Delete</button>
+          </div>
         </div>
-        <div class="admin-actions">
-          ${!event.approved ? `<button class="approve-btn" onclick="approveEvent('${event.id}')">✅ Approve</button>` : ''}
-          <button class="delete-btn" onclick="deleteEvent('${event.id}')">🗑 Delete</button>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   window.approveEvent = async (id) => {
     const { error } = await supabase.from('events').update({ approved: true }).eq('id', id);
     if (error) { alert('Error: ' + error.message); return; }
     allEvents = allEvents.map(e => e.id === id ? { ...e, approved: true } : e);
+    renderEvents();
+  };
+
+  window.clearReports = async (id) => {
+    const { error } = await supabase.from('events').update({ report_count: 0 }).eq('id', id);
+    if (error) { alert('Error: ' + error.message); return; }
+    allEvents = allEvents.map(e => e.id === id ? { ...e, report_count: 0 } : e);
     renderEvents();
   };
 
