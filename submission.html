@@ -118,6 +118,15 @@
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
+    // Rate limit: max 3 submissions per hour
+    const rlKey = 'submission_times';
+    const rlNow = Date.now();
+    let rlTimes = JSON.parse(localStorage.getItem(rlKey) || '[]');
+    rlTimes = rlTimes.filter(t => rlNow - t < 3600000);
+    if (rlTimes.length >= 3) {
+      showStatus('❌ Too many submissions. Please wait before submitting again.', 'error');
+      return;
+    }
     status.textContent = '';
     status.className   = '';
     submitBtn.disabled = true;
@@ -183,6 +192,8 @@
       showStatus(`❌ Submission failed: ${insertError.message}`, 'error');
     } else {
       showStatus('✅ Event submitted! Redirecting…', 'success');
+      rlTimes.push(Date.now());
+      localStorage.setItem(rlKey, JSON.stringify(rlTimes));
       form.reset();
       flyerPreview.innerHTML = '';
       setTimeout(() => window.location.href = 'index.html', 2500);

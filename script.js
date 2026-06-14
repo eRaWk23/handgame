@@ -25,11 +25,9 @@ let calendarDate = new Date();
 
 // ─── Report tracking (localStorage) ─────────────────────
 function getReportedIds() {
-  try {
-    return JSON.parse(localStorage.getItem('reported_events') || '[]');
-  } catch { return []; }
+  try { return JSON.parse(localStorage.getItem('reported_events') || '[]'); }
+  catch { return []; }
 }
-
 function markReported(id) {
   const reported = getReportedIds();
   if (!reported.includes(id)) {
@@ -37,7 +35,6 @@ function markReported(id) {
     localStorage.setItem('reported_events', JSON.stringify(reported));
   }
 }
-
 function hasReported(id) {
   return getReportedIds().includes(id);
 }
@@ -58,7 +55,6 @@ async function loadEvents() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Filter out reported events (report_count >= threshold)
   const visible = data.filter(event => (event.report_count || 0) < REPORT_THRESHOLD);
 
   allEvents = visible.filter(event => new Date(event.start_date) >= today);
@@ -105,7 +101,7 @@ function updateCount(events) {
   if (existingCount) existingCount.remove();
   const countEl = document.createElement("p");
   countEl.id = "event-count";
-  countEl.style.cssText = "text-align:center; color:#aaa; margin-bottom:1rem;";
+  countEl.style.cssText = "text-align:center; color:#a89888; margin-bottom:1rem;";
   const label = showingPast ? 'past' : 'upcoming';
   countEl.textContent = `${events.length} ${label} event${events.length !== 1 ? 's' : ''}`;
 
@@ -147,7 +143,7 @@ viewListBtn.style.opacity = '1';
 viewListBtn.style.fontWeight = '700';
 viewCalendarBtn.style.opacity = '0.5';
 
-// ─── Report Event ────────────────────────────────────────
+// ─── Report Event (via RPC) ─────────────────────────────
 async function reportEvent(eventId, btn) {
   if (hasReported(eventId)) {
     btn.textContent = 'Already reported';
@@ -158,27 +154,10 @@ async function reportEvent(eventId, btn) {
   btn.textContent = 'Reporting…';
   btn.disabled = true;
 
-  // Get current count
-  const { data, error: fetchErr } = await supabase
-    .from('events')
-    .select('report_count')
-    .eq('id', eventId)
-    .single();
+  const { error } = await supabase.rpc('report_event', { event_id: eventId });
 
-  if (fetchErr) {
-    btn.textContent = '🚩 Report';
-    btn.disabled = false;
-    return;
-  }
-
-  const newCount = (data.report_count || 0) + 1;
-
-  const { error: updateErr } = await supabase
-    .from('events')
-    .update({ report_count: newCount })
-    .eq('id', eventId);
-
-  if (updateErr) {
+  if (error) {
+    console.error('Report error:', error);
     btn.textContent = '🚩 Report';
     btn.disabled = false;
     return;
@@ -187,10 +166,8 @@ async function reportEvent(eventId, btn) {
   markReported(eventId);
   btn.textContent = '✓ Reported';
 
-  // If threshold reached, remove from view
-  if (newCount >= REPORT_THRESHOLD) {
-    setTimeout(() => loadEvents(), 1000);
-  }
+  // Reload to check if threshold reached
+  setTimeout(() => loadEvents(), 1000);
 }
 
 // ─── List View ───────────────────────────────────────────
@@ -198,7 +175,7 @@ function renderEvents(events) {
   eventList.innerHTML = "";
 
   if (events.length === 0) {
-    eventList.innerHTML = `<p style="text-align:center; color:#aaa;">${showingPast ? 'No past events found.' : 'No events match your search.'}</p>`;
+    eventList.innerHTML = `<p style="text-align:center; color:#a89888;">${showingPast ? 'No past events found.' : 'No events match your search.'}</p>`;
     return;
   }
 
@@ -221,7 +198,7 @@ function renderEvents(events) {
     const alreadyReported = hasReported(event.id);
 
     div.innerHTML = `
-      ${showingPast ? '<span style="background:#555; color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem; float:right;">PAST</span>' : ''}
+      ${showingPast ? '<span style="background:#3d3028; color:#a89888; padding:2px 8px; border-radius:4px; font-size:0.75rem; float:right;">PAST</span>' : ''}
       <h3>${event.title}</h3>
       <p><strong>Date:</strong> ${dateStr}</p>
       <p><strong>Location:</strong>
@@ -234,19 +211,18 @@ function renderEvents(events) {
       ${event.flyer_url ? `
         <a href="${event.flyer_url}" target="_blank" rel="noopener" style="display:block; text-align:center;">
           <img src="${event.flyer_url}" alt="Event flyer for ${event.title}" class="flyer-preview"
-            style="max-width:250px; border-radius:8px; border:2px solid #999; margin:10px auto; display:block;" />
+            style="max-width:250px; border-radius:8px; border:2px solid #3d3028; margin:10px auto; display:block;" />
         </a>
-        <p style="font-size:0.8rem; color:#aaa;">Tap flyer to view full size</p>
+        <p style="font-size:0.8rem; color:#a89888;">Tap flyer to view full size</p>
       ` : '<p><em>No flyer available</em></p>'}
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
-        <button class="share-btn" data-title="${event.title}" data-id="${event.id}" style="background:none; border:1px solid #666; color:#aaa; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:0.8rem;">📤 Share</button>
-        <button class="report-btn" data-id="${event.id}" style="background:none; border:1px solid #555; color:#888; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:0.8rem;" ${alreadyReported ? 'disabled' : ''}>${alreadyReported ? '✓ Reported' : '🚩 Report'}</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; flex-wrap:wrap; gap:0.5rem;">
+        <button class="share-btn" data-title="${event.title}" data-id="${event.id}" style="background:none; border:1px solid #3d3028; color:#a89888; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:0.8rem;">📤 Share</button>
+        <button class="report-btn" data-id="${event.id}" style="background:none; border:1px solid #3d3028; color:#a89888; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:0.8rem;" ${alreadyReported ? 'disabled' : ''}>${alreadyReported ? '✓ Reported' : '🚩 Report'}</button>
       </div>
     `;
 
     eventList.appendChild(div);
 
-    // Share button
     div.querySelector('.share-btn').addEventListener('click', async (e) => {
       const btn = e.currentTarget;
       const title = btn.dataset.title;
@@ -257,17 +233,22 @@ function renderEvents(events) {
           await navigator.share({ title: `Handgame: ${title}`, url });
         } catch (err) { /* user cancelled */ }
       } else {
-        await navigator.clipboard.writeText(url);
-        btn.textContent = '✅ Link copied!';
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.textContent = '✅ Copied!';
         setTimeout(() => { btn.textContent = '📤 Share'; }, 2000);
       }
     });
 
-    // Report button
     div.querySelector('.report-btn').addEventListener('click', (e) => {
       const btn = e.currentTarget;
-      const id = btn.dataset.id;
-      reportEvent(id, btn);
+      reportEvent(btn.dataset.id, btn);
     });
   });
 
@@ -307,7 +288,7 @@ function renderPagination(events) {
   }
 }
 
-// ─── Calendar View ───────────────────────────────────────
+// ─── Calendar View (earth tones) ─────────────────────────
 function renderCalendar(events) {
   const year = calendarDate.getFullYear();
   const month = calendarDate.getMonth();
@@ -335,18 +316,18 @@ function renderCalendar(events) {
   let html = `
     <div style="max-width:400px; margin:0 auto; font-family:'JetBrains Mono', monospace;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-        <button id="cal-prev" style="background:none; border:1px solid #555; color:#ddd; padding:4px 12px; border-radius:6px; cursor:pointer; font-size:1.2rem;">◀</button>
-        <strong style="font-size:1.1rem;">${monthName}</strong>
-        <button id="cal-next" style="background:none; border:1px solid #555; color:#ddd; padding:4px 12px; border-radius:6px; cursor:pointer; font-size:1.2rem;">▶</button>
+        <button id="cal-prev" style="background:none; border:1px solid #4a3c30; color:#e8ddd0; padding:4px 12px; border-radius:6px; cursor:pointer; font-size:1.2rem;">◀</button>
+        <strong style="font-size:1.1rem; color:#e6a530;">${monthName}</strong>
+        <button id="cal-next" style="background:none; border:1px solid #4a3c30; color:#e8ddd0; padding:4px 12px; border-radius:6px; cursor:pointer; font-size:1.2rem;">▶</button>
       </div>
       <div style="display:grid; grid-template-columns:repeat(7, 1fr); text-align:center; gap:2px;">
-        <div style="color:#888; font-size:0.8rem; padding:4px;">Su</div>
-        <div style="color:#888; font-size:0.8rem; padding:4px;">Mo</div>
-        <div style="color:#888; font-size:0.8rem; padding:4px;">Tu</div>
-        <div style="color:#888; font-size:0.8rem; padding:4px;">We</div>
-        <div style="color:#888; font-size:0.8rem; padding:4px;">Th</div>
-        <div style="color:#888; font-size:0.8rem; padding:4px;">Fr</div>
-        <div style="color:#888; font-size:0.8rem; padding:4px;">Sa</div>
+        <div style="color:#a89888; font-size:0.8rem; padding:4px;">Su</div>
+        <div style="color:#a89888; font-size:0.8rem; padding:4px;">Mo</div>
+        <div style="color:#a89888; font-size:0.8rem; padding:4px;">Tu</div>
+        <div style="color:#a89888; font-size:0.8rem; padding:4px;">We</div>
+        <div style="color:#a89888; font-size:0.8rem; padding:4px;">Th</div>
+        <div style="color:#a89888; font-size:0.8rem; padding:4px;">Fr</div>
+        <div style="color:#a89888; font-size:0.8rem; padding:4px;">Sa</div>
   `;
 
   for (let i = 0; i < firstDay; i++) {
@@ -358,12 +339,12 @@ function renderCalendar(events) {
     const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
 
     let style = 'padding:6px; border-radius:6px; font-size:0.9rem; position:relative; ';
-    if (isToday) style += 'border:1px solid #00ff88; ';
-    if (hasEvent) style += 'cursor:pointer; background:#2a3a2a; font-weight:700; color:#00ff88; ';
-    else style += 'color:#888; ';
+    if (isToday) style += 'border:1px solid #3dbead; ';
+    if (hasEvent) style += 'cursor:pointer; background:#2a2018; font-weight:700; color:#d4723c; ';
+    else style += 'color:#a89888; ';
 
-    const dot = hasEvent ? `<span style="display:block; width:5px; height:5px; background:#00ff88; border-radius:50%; margin:2px auto 0;"></span>` : '';
-    const count = hasEvent && hasEvent.length > 1 ? `<span style="font-size:0.6rem; position:absolute; top:2px; right:4px; color:#aaa;">${hasEvent.length}</span>` : '';
+    const dot = hasEvent ? `<span style="display:block; width:5px; height:5px; background:#d4723c; border-radius:50%; margin:2px auto 0;"></span>` : '';
+    const count = hasEvent && hasEvent.length > 1 ? `<span style="font-size:0.6rem; position:absolute; top:2px; right:4px; color:#a89888;">${hasEvent.length}</span>` : '';
 
     html += `<div class="cal-day" data-day="${day}" style="${style}">${count}${day}${dot}</div>`;
   }
@@ -389,31 +370,31 @@ function renderCalendar(events) {
       const dayEventsDiv = document.getElementById('cal-day-events');
 
       if (!dayEvents || dayEvents.length === 0) {
-        dayEventsDiv.innerHTML = `<p style="text-align:center; color:#888;">No events on ${monthName.split(' ')[0]} ${day}.</p>`;
+        dayEventsDiv.innerHTML = `<p style="text-align:center; color:#a89888;">No events on ${monthName.split(' ')[0]} ${day}.</p>`;
         return;
       }
 
-      let evHtml = `<h3 style="text-align:center; margin-bottom:0.5rem;">Events on ${monthName.split(' ')[0]} ${day}</h3>`;
+      let evHtml = `<h3 style="text-align:center; margin-bottom:0.5rem; color:#e6a530;">Events on ${monthName.split(' ')[0]} ${day}</h3>`;
       dayEvents.forEach(event => {
         const dateStr = event.end_date && event.end_date !== event.start_date
           ? `${formatDate(event.start_date)} – ${formatDate(event.end_date)}`
           : formatDate(event.start_date);
 
         evHtml += `
-          <div style="border:1px solid #444; border-radius:8px; padding:1rem; margin-bottom:0.75rem;">
-            <h4>${event.title}</h4>
+          <div style="border:1px solid #3d3028; border-left:4px solid #d4723c; border-radius:8px; padding:1rem; margin-bottom:0.75rem; background:#1c1612;">
+            <h4 style="color:#e6a530;">${event.title}</h4>
             <p><strong>Date:</strong> ${dateStr}</p>
             <p><strong>Location:</strong>
-              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}" target="_blank" rel="noopener">${event.location}</a>
+              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}" target="_blank" rel="noopener" style="color:#3dbead;">${event.location}</a>
             </p>
             ${event.tribe ? `<p><strong>Tribe / Group:</strong> ${event.tribe}</p>` : ''}
             ${event.details ? `<p><strong>Details:</strong> ${event.details}</p>` : ''}
             ${event.flyer_url ? `
               <a href="${event.flyer_url}" target="_blank" rel="noopener" style="display:block; text-align:center;">
                 <img src="${event.flyer_url}" alt="Event flyer for ${event.title}"
-                  style="max-width:250px; border-radius:8px; border:2px solid #999; margin:10px auto; display:block;" />
+                  style="max-width:250px; border-radius:8px; border:2px solid #3d3028; margin:10px auto; display:block;" />
               </a>
-              <p style="font-size:0.8rem; color:#aaa; text-align:center;">Tap flyer to view full size</p>
+              <p style="font-size:0.8rem; color:#a89888; text-align:center;">Tap flyer to view full size</p>
             ` : ''}
           </div>
         `;
