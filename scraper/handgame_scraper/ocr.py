@@ -128,7 +128,7 @@ set is_handgame false and everything else null."""
 
 
 def vision_extract(
-    image_bytes: bytes, media_type: str = "image/jpeg", model: str = "claude-sonnet-4-5"
+    image_bytes: bytes, media_type: str = "image/jpeg", model: str = "claude-opus-5"
 ) -> Optional[dict[str, Any]]:
     """Read a flyer with Claude vision. Returns None if unavailable."""
     api_key = os.environ.get("ANTHROPIC_API_KEY")

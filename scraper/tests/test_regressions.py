@@ -17,7 +17,11 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from handgame_scraper import dedupe  # noqa: E402
-from handgame_scraper.extract import find_dates, find_location  # noqa: E402
+from handgame_scraper.extract import (  # noqa: E402
+    find_dates,
+    find_location,
+    topic_score,
+)
 from handgame_scraper.models import Event, location_state, normalize_location  # noqa: E402
 from handgame_scraper.supabase import Supabase, SupabaseError  # noqa: E402
 from handgame_scraper.sources.webpages import WebPagesSource  # noqa: E402
@@ -382,6 +386,106 @@ def test_community_flags_are_respected():
               "community-flagged")
 
 
+def test_hint_cannot_supply_the_keyword():
+    """10. a config hint must not score a page on its own.
+
+    config.yaml lets a site carry `hint: stickgame handgame tournament` to
+    help thin pages. Every call site used to pass that hint as one of the
+    *texts* arguments, so it was concatenated into the blob being searched
+    and supplied the strong keyword itself. Result: a casino bingo listing
+    scored 0.8 and every page on a hinted site passed the topic filter.
+    Found on the first live run, where powwows.com/calendar/ scored 1.0
+    with no handgame keyword anywhere on the page.
+    """
+    print("\n10. a config hint cannot make a page on topic by itself")
+    hint = "stickgame handgame tournament"
+
+    off_topic = "Bingo night at the casino, doors at 6pm"
+    check("hint alone does not clear the threshold",
+          topic_score(off_topic, hint=hint) < 0.5, True)
+    check_true("and the hint is not silently ignored either",
+               topic_score(off_topic, hint=hint) >= topic_score(off_topic))
+
+    # The old behaviour, spelled out so nobody reintroduces it by passing
+    # the hint positionally again.
+    check_true("passing a hint positionally is what broke it",
+               topic_score(off_topic, hint) >= 0.7)
+
+    # A page that really is about handgame still scores, hint or not.
+    real = "38th Annual Labor Day Handgame Tournament, double elimination"
+    check_true("a real handgame page still scores high",
+               topic_score(real, hint=hint) >= 0.7)
+    check_true("and scores high with no hint at all",
+               topic_score(real) >= 0.7)
+
+    # A hint must not rescue something the negative list has ruled out.
+    check("a hint cannot rescue an esports listing",
+          topic_score("Fortnite video game tournament", hint=hint), 0.0)
+
+
+def test_weekday_contradicts_the_date():
+    """11. a printed weekday that disagrees with the date must warn.
+
+    Found on the first real flyer run. Tesseract read the Nespelem
+    Celebration flyer's "Thursday, July 9, 2026" as "July 7, 2026" — a
+    clean parse, high confidence, no warning, and off by two days. Nothing
+    in the pipeline could have caught it: the date is well-formed and in
+    range. The flyer prints the weekday right next to the date, and July
+    7th 2026 is a Tuesday, so the contradiction was there to be found.
+
+    A wrong date sends someone to an empty gym, so this warns rather than
+    guessing which of the two was misread.
+    """
+    print("\n11. a weekday that contradicts its date is flagged")
+
+    def warn(text):
+        return find_dates(text, today=TODAY)[2]
+
+    # The real OCR output that motivated this.
+    misread = "Thursday, July 7, 2026 Registration closes 8pm"
+    check_true("the actual misread flyer is flagged",
+               any("Thursday" in w and "Tuesday" in w for w in warn(misread)))
+
+    # What the flyer really says must stay silent.
+    for good in ("Thursday, July 9, 2026",
+                 "Friday, July 10, 2026",
+                 "Saturday, July 11, 2026",
+                 "Sunday, July 12, 2026"):
+        check(f"{good!r} is consistent",
+              [w for w in warn(good) if "flyer says" in w], [])
+
+    # Other spellings of the same contradiction.
+    check_true("day-first form is checked",
+               any("flyer says" in w for w in warn("Monday 27 June 2026")))
+    check_true("abbreviations are checked",
+               any("flyer says" in w for w in warn("Wed, Jun 27 2026")))
+    check("abbreviations do not false-positive",
+          [w for w in warn("Sat, Jun 27 2026") if "flyer says" in w], [])
+
+    # A weekday that is not next to the date proves nothing about it.
+    check("a distant weekday is not paired with the date",
+          [w for w in warn("Saturday is our big day. Come out June 27, 2026")
+           if "flyer says" in w], [])
+    check("no weekday printed means nothing to check",
+          [w for w in warn("September 12-14, 2026") if "flyer says" in w], [])
+
+    # Without a printed year the weekday cannot pick the year, so only a
+    # day that fits no nearby year at all is a real contradiction.
+    check("a correct weekday with no year stays silent",
+          [w for w in warn("Saturday, June 27") if "flyer says" in w], [])
+
+    # The warning must name the date that actually got queued.
+    start, _end, warnings = find_dates("Monday, June 27", today=TODAY)
+    named = [w for w in warnings if "flyer says" in w]
+    check_true("the warning names the year that was queued",
+               named and str(start.year) in named[0])
+
+    # A warning must never rewrite the date it warns about.
+    start, _end, _w = find_dates(misread, today=TODAY)
+    check("the contradicted date is reported unchanged, not corrected",
+          start.isoformat(), "2026-07-07")
+
+
 if __name__ == "__main__":
     for fn in [
         test_day_list_is_not_a_year,
@@ -393,6 +497,8 @@ if __name__ == "__main__":
         test_merge_keeps_the_other_link,
         test_approved_column_falls_back,
         test_community_flags_are_respected,
+        test_hint_cannot_supply_the_keyword,
+        test_weekday_contradicts_the_date,
     ]:
         fn()
     print(f"\n  {PASS} passed, {FAIL} failed\n")

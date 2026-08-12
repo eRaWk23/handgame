@@ -94,7 +94,7 @@ class WebPagesSource(Source):
                     continue
                 title = _text(node.get("name"))
                 description = _text(node.get("description"))
-                if topic_score(title, description, site.get("hint", "")) < 0.5:
+                if topic_score(title, description, hint=site.get("hint")) < 0.5:
                     continue
                 yield self._event(
                     title=title or "",
@@ -119,7 +119,7 @@ class WebPagesSource(Source):
             tag.decompose()
 
         page_text = soup.get_text("\n", strip=True)
-        if topic_score(page_text, site.get("hint", "")) < min_topic:
+        if topic_score(page_text, hint=site.get("hint")) < min_topic:
             return
 
         # Prefer a tight container over the whole page so dates stay near titles.
@@ -136,7 +136,7 @@ class WebPagesSource(Source):
 
         for block in blocks[:40]:
             text = block.get_text("\n", strip=True)
-            if len(text) < 25 or topic_score(text) < min_topic:
+            if len(text) < 25 or topic_score(text, hint=site.get("hint")) < min_topic:
                 continue
             start, end, warnings = find_dates(text)
             flyer = self._flyer_in(block, page_url) or self._flyer_in(soup, page_url)
@@ -221,7 +221,13 @@ class WebPagesSource(Source):
             absolute = urllib.parse.urljoin(page_url, a["href"]).split("#")[0]
             if absolute in seen:
                 continue
-            if urllib.parse.urlsplit(absolute).netloc != host:
+            parts = urllib.parse.urlsplit(absolute)
+            # The Events Calendar publishes its subscribe links as webcal://,
+            # which shares the site's host and so used to pass the check below
+            # and then die in requests with "no connection adapters".
+            if parts.scheme not in ("http", "https"):
+                continue
+            if parts.netloc != host:
                 continue
             seen.add(absolute)
             label = f"{a.get_text(' ', strip=True)} {absolute}".lower()

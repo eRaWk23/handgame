@@ -32,8 +32,11 @@ cd scraper
 pip install -r requirements.txt
 export SUPABASE_URL="https://atorftwulkabkmhaeeir.supabase.co"
 export SUPABASE_ANON_KEY="<the anon key, already a repo secret>"
-python3 run.py scrape --only calendars --dry-run -v
+python3 run.py -v scrape --only calendars --dry-run
 ```
+
+`-v` is a global flag and must come *before* the subcommand; putting it at the
+end exits 2 with "unrecognized arguments".
 
 Start with `calendars` — it is the highest-signal adapter and the least likely
 to produce noise. Then `webpages`, then the rest.
@@ -131,6 +134,14 @@ reintroduced a real bug — do not adjust the test to match.**
    error page) used to abort a run after all the fetching and OCR was spent.
 10. **`publish` never aborts mid-file.** A partial publish that raises leaves
     the user unable to safely re-run without double-inserting.
+11. **A printed weekday is checked against the date beside it.** Tesseract read
+    the Nespelem flyer's "Thursday, July 9, 2026" as "July 7, 2026": a clean
+    parse, high confidence, no warning, two days wrong. Nothing downstream
+    could catch it — the date is well-formed and in range. But July 7th 2026
+    is a Tuesday and the flyer says Thursday, so `find_dates` now warns on any
+    weekday that contradicts an adjacent date. It only compares *adjacent*
+    pairs (a weekday elsewhere on a listing page proves nothing) and it never
+    rewrites the date — which of the two was misread is not knowable here.
 
 ## 6. Decisions made on purpose
 
@@ -156,18 +167,38 @@ Do not undo these without a reason:
 
 ## 7. Known gaps / next steps
 
-- [ ] **Run it for real.** Nothing has hit a live site yet. Expect the
-      `webpages` adapter to need selector work per site.
-- [ ] **Verify the site list.** `config.yaml` domains were assembled from
-      knowledge, not confirmed by fetching. Some may be wrong or dead. Prune
-      what 404s and add what actually carries flyers.
+- [x] **Run it for real.** Done 2026-08-12: calendars, webpages and inbox all
+      run against live sites. Both web adapters returned zero events, and that
+      was the correct answer — no site in the list currently advertises a
+      handgame event in text. The selectors work: Tulalip parsed 19 events
+      cleanly, all correctly scored 0.00 and dropped.
+- [x] **Verify the site list.** Done 2026-08-12, every domain fetched. Of 14
+      "calendar" sites exactly three serve a feed (Yakama iCal, CSKT and Nez
+      Perce REST); the rest were pruned with reasons recorded in config.yaml.
+      Dead: `umatilla.nsn.us` (no DNS, now `ctuir.org`), Shoshone-Bannock
+      (refuses :443), Crazy Crow's calendar (gone). Moved: `csktribes.org` →
+      `cskt.org`, `12tribescasino.com` → `colvillecasinos.com`.
+- [ ] **CTUIR has no machine-readable feed.** `ctuir.org/events/` is the
+      largest listing found (29 pages) and is JavaScript-rendered, so a static
+      fetch sees 804 characters and no events. `wp-json` 404s. Currently
+      unreachable by any adapter; needs a rendered fetch or a different route.
+- [ ] **Beware the silent empty feed.** A `wp-json` probe that returns 200 with
+      an empty events list logs *nothing* — identical in the run output to a
+      site with no feed at all. Nez Perce was pruned once on that mistake and
+      had to be restored. Confirm a feed is absent by requesting the endpoint
+      directly before removing a site.
 - [ ] **Flyer mirroring is written but unused.** `supabase.upload_flyer()`
       exists; the pipeline does not call it. Remote flyers rot, and a calendar
       of broken images is bad. Worth wiring into the approve step, which needs
       the storage bucket to accept writes from the anon key.
-- [ ] **Vision OCR is untested against real flyers.** The prompt in `ocr.py`
-      is reasonable but unproven; check its output on a dozen real ones before
-      trusting `confidence`.
+- [ ] **Vision OCR is still untested, and Tesseract alone is not enough.**
+      Five real flyers were run through `inbox/` on 2026-08-12 with no
+      `ANTHROPIC_API_KEY`, so Tesseract handled them alone. All five were
+      rejected: two lost their location (Redding CA and Goodfish Lake AB are
+      outside `KNOWN_PLACES`), one lost its date entirely to display-font
+      spacing, one lost the word "stickgame" to stylised type, and one had a
+      digit misread — see landmine 11. Set `ANTHROPIC_API_KEY` before judging
+      this path; the vision call at `pipeline.py:141` is wired and ready.
 - [ ] **`KNOWN_PLACES` in `extract.py` is Pacific Northwest and Plateau
       heavy.** Fine for now — that is where handgame concentrates — but it will
       miss California, Great Basin, and prairie events. Extend as needed.
@@ -181,7 +212,8 @@ Do not undo these without a reason:
 ```bash
 python3 run.py scrape                    # collect, dedupe, write out/review.html
 python3 run.py scrape --only calendars   # one source
-python3 run.py scrape --dry-run -v       # change nothing, log everything
+python3 run.py -v scrape --dry-run       # change nothing, log everything
+                                         # note: -v goes before the subcommand
 python3 run.py publish approved.json     # insert reviewed events
 python3 run.py status                    # what the ledger remembers
 python3 run.py forget <fingerprint>      # let a rejected item come back

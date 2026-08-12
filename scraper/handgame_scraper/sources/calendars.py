@@ -47,15 +47,29 @@ class CalendarFeedSource(Source):
                 continue
 
             got = 0
+            found_feed = False
             for path in ([site["feed"]] if site.get("feed") else WP_PATHS):
                 url = path if path.startswith("http") else base + path
                 data = self.fetch.get_json(url)
                 if isinstance(data, dict) and data.get("events"):
-                    for node in data["events"]:
+                    found_feed = True
+                    nodes = data["events"]
+                    for node in nodes:
                         event = self._from_wp(node, site, min_topic)
                         if event:
                             got += 1
                             yield event
+                    # A feed that answers but yields nothing is a completely
+                    # different problem from a site with no feed at all, and
+                    # the two used to look identical in the run output.
+                    self.log.info(
+                        "%s: WordPress feed carried %d events, kept %d "
+                        "(topic score >= %.2f)",
+                        url,
+                        len(nodes),
+                        got,
+                        min_topic,
+                    )
                     break
 
             if got:
@@ -65,15 +79,30 @@ class CalendarFeedSource(Source):
                 url = path if path.startswith("http") else base + path
                 text = self.fetch.get_text(url)
                 if text and "BEGIN:VEVENT" in text:
+                    found_feed = True
+                    in_feed = text.count("BEGIN:VEVENT")
+                    kept = 0
                     for event in self._from_ics(text, site, url, min_topic):
+                        kept += 1
                         yield event
+                    self.log.info(
+                        "%s: iCal feed carried %d events, kept %d "
+                        "(topic score >= %.2f)",
+                        url,
+                        in_feed,
+                        kept,
+                        min_topic,
+                    )
                     break
+
+            if not found_feed:
+                self.log.info("%s: no machine-readable feed found", base)
 
     # ------------------------------------------------------------------
     def _from_wp(self, node: dict, site: dict, min_topic: float) -> Optional[Event]:
         title = _strip_html(node.get("title"))
         description = _strip_html(node.get("description"))
-        if topic_score(title, description, site.get("hint", "")) < min_topic:
+        if topic_score(title, description, hint=site.get("hint")) < min_topic:
             return None
 
         venue = node.get("venue") or {}
@@ -107,7 +136,7 @@ class CalendarFeedSource(Source):
             fields = _parse_ics_block(block)
             title = fields.get("SUMMARY", "")
             description = fields.get("DESCRIPTION", "")
-            if topic_score(title, description, site.get("hint", "")) < min_topic:
+            if topic_score(title, description, hint=site.get("hint")) < min_topic:
                 continue
             start = _ics_date(fields.get("DTSTART"))
             if not start:

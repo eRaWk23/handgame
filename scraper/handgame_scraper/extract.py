@@ -21,6 +21,24 @@ MONTHS = {
 }
 _MONTH_RE = "|".join(sorted(MONTHS, key=len, reverse=True))
 
+# Flyers almost always print the weekday next to the date. That redundancy is
+# free verification: OCR misreading "Thursday, July 9" as "July 7" produces a
+# date that parses perfectly and is silently wrong, but July 7th is a Tuesday,
+# and the flyer says Thursday. Monday is 0, matching date.weekday().
+WEEKDAYS = {
+    "monday": 0, "mon": 0,
+    "tuesday": 1, "tues": 1, "tue": 1,
+    "wednesday": 2, "weds": 2, "wed": 2,
+    "thursday": 3, "thurs": 3, "thur": 3, "thu": 3,
+    "friday": 4, "fri": 4,
+    "saturday": 5, "sat": 5,
+    "sunday": 6, "sun": 6,
+}
+_WEEKDAY_RE = "|".join(sorted(WEEKDAYS, key=len, reverse=True))
+_WEEKDAY_NAMES = [
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+]
+
 STATES = {
     "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas",
     "CA": "California", "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware",
@@ -162,6 +180,62 @@ def _infer_year(month: int, day: int, today: date) -> int:
     return today.year + 1
 
 
+_WEEKDAY_DATE = re.compile(
+    rf"\b({_WEEKDAY_RE})\b\.?,?\s{{0,3}}"
+    rf"(?:({_MONTH_RE})\.?\s+(?<!\d)(\d{{1,2}})(?!\d)"
+    rf"|(?<!\d)(\d{{1,2}})(?!\d)\s+({_MONTH_RE})\.?\b)"
+    rf"\s*,?\s*(?:(?<!\d)(\d{{4}}|'\d{{2}})(?!\d))?",
+    re.I,
+)
+
+
+def _weekday_conflicts(cleaned: str, today: date) -> list[str]:
+    """Warn when a printed weekday contradicts the date printed beside it.
+
+    Only compares a weekday to a date directly adjacent to it. A weekday at
+    the top of a page and a date at the bottom say nothing about each other,
+    and pairing those would fire constantly on listing pages.
+
+    Never changes a date. A contradiction means one of the two was misread,
+    and which one is not knowable from here, so it warns and lets a person
+    look. This is the check that catches an OCR digit error that would
+    otherwise parse cleanly and publish a wrong date.
+    """
+    out: list[str] = []
+    for m in _WEEKDAY_DATE.finditer(cleaned):
+        named = WEEKDAYS[m.group(1).lower()]
+        if m.group(2):
+            month, day = MONTHS[m.group(2).lower()], int(m.group(3))
+        else:
+            month, day = MONTHS[m.group(5).lower()], int(m.group(4))
+
+        printed = m.group(6)
+        if printed:
+            base = _clamp_year(printed, today)
+            years = [base]
+        else:
+            # With no printed year the weekday cannot settle which year was
+            # meant, so accept any nearby year that fits and complain only
+            # when none of them do — that means the day itself is wrong.
+            base = _infer_year(month, day, today)
+            years = [base - 1, base, base + 1]
+
+        resolved = [d for d in (_safe_date(y, month, day) for y in years) if d]
+        if not resolved or any(d.weekday() == named for d in resolved):
+            continue
+        # Name the year find_dates would settle on, not whichever candidate
+        # happened to sort first, so the warning matches the queued date.
+        actual = _safe_date(base, month, day) or resolved[0]
+        note = (
+            f"flyer says {m.group(1).title()} but "
+            f"{actual:%B} {actual.day} {actual.year} is a "
+            f"{_WEEKDAY_NAMES[actual.weekday()]}"
+        )
+        if note not in out:
+            out.append(note)
+    return out
+
+
 def find_dates(text: str, today: Optional[date] = None) -> tuple[Optional[date], Optional[date], list[str]]:
     """Return (start, end, warnings) for the most likely event date range."""
     today = today or date.today()
@@ -279,6 +353,10 @@ def find_dates(text: str, today: Optional[date] = None) -> tuple[Optional[date],
 
     if not candidates:
         return None, None, warnings
+
+    # Only worth reporting once a date actually parsed — a page with no date
+    # at all is dropped as incomplete anyway.
+    warnings.extend(_weekday_conflicts(cleaned, today))
 
     # A printed year is a fact; an inferred one is a guess. Never let a guess
     # outrank a fact just because the guess lands in the future — that is how
@@ -399,8 +477,17 @@ def find_tribe(text: str) -> Optional[str]:
     return None
 
 
-def topic_score(*texts: Optional[str]) -> float:
-    """0..1 confidence that this text describes a handgame event."""
+def topic_score(*texts: Optional[str], hint: Optional[str] = None) -> float:
+    """0..1 confidence that this text describes a handgame event.
+
+    `hint` is the operator-supplied string from config.yaml. It is scored
+    separately and can only ever add support-level credit, never the strong
+    keyword itself. Passing it as one of *texts* instead — which is what the
+    call sites used to do — let a hint of "stickgame handgame tournament"
+    supply the very word being searched for, so every page on a hinted site
+    scored 0.8 whether or not it had anything to do with handgame. A casino
+    bingo listing came back as a high-confidence handgame event.
+    """
     blob = " ".join(t for t in texts if t).lower()
     if not blob:
         return 0.0
@@ -412,6 +499,12 @@ def topic_score(*texts: Optional[str]) -> float:
     if any(s in blob for s in TOPIC_STRONG):
         score += 0.7
     hits = sum(1 for s in TOPIC_SUPPORT if s in blob)
+    if hint:
+        # Support terms the hint contributes that the text did not already
+        # carry. Deliberately no TOPIC_STRONG check: a hint must never be
+        # able to push a page over the threshold on its own.
+        hint_blob = hint.lower()
+        hits += sum(1 for s in TOPIC_SUPPORT if s in hint_blob and s not in blob)
     score += min(0.3, hits * 0.1)
     return round(min(score, 1.0), 2)
 
