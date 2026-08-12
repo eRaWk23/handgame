@@ -486,6 +486,76 @@ def test_weekday_contradicts_the_date():
           start.isoformat(), "2026-07-07")
 
 
+def test_ocr_does_not_outrank_the_flyer_reader():
+    """12. Tesseract must not lock the vision reader out of a field.
+
+    _fill_from_vision only wrote to fields that were still empty, and OCR
+    always runs first. So whatever Tesseract produced — a garbled title, a
+    misread date — was final, and the vision call was reduced to filling
+    blanks. On the first paid run the reader read the Nespelem flyer
+    correctly as "Nespelem Celebration Stickgames", July 9th; the event kept
+    OCR's junk title and OCR's July 7th and was dropped as off topic.
+
+    The reader now wins on title, dates and location. It never overrules a
+    value a person typed into a sidecar note, and a date it disagrees with
+    is reported rather than swapped silently.
+    """
+    print("\n12. the flyer reader corrects OCR instead of filling its blanks")
+    from handgame_scraper.pipeline import Pipeline
+
+    fill = Pipeline.__new__(Pipeline)._fill_from_vision
+    read = {
+        "is_handgame": True,
+        "title": "Nespelem Celebration Stickgames",
+        "start_date": "2026-07-09",
+        "end_date": "2026-07-12",
+        "location": "Nespelem, WA",
+        "confidence": 0.95,
+    }
+
+    # The real failure: OCR's junk title and wrong date must both be replaced.
+    ev = Event(title="ae a i om Lelebraliogse", start_date="2026-07-07")
+    fill(ev, dict(read))
+    check("the garbled title is replaced", ev.title, "Nespelem Celebration Stickgames")
+    check("the misread date is corrected", ev.start_date, "2026-07-09")
+    check_true("and the event is now on topic", topic_score(ev.title) >= 0.5)
+    check_true("the date disagreement is reported, not hidden",
+               any("flyer reader read 2026-07-09" in w for w in ev.warnings))
+    check("a replaced title is no longer provisional", ev.title_provisional, False)
+
+    # A person who typed the answer outranks any reader.
+    typed = Event(title="38th Annual Labor Day Stickgame",
+                  start_date="2026-09-05", location="Nespelem, WA")
+    typed._manual_fields = frozenset({"title", "start_date", "location"})
+    fill(typed, dict(read))
+    check("a sidecar title is never overruled",
+          typed.title, "38th Annual Labor Day Stickgame")
+    check("a sidecar date is never overruled", typed.start_date, "2026-09-05")
+    check("and overruling nothing raises no warning", typed.warnings, [])
+
+    # Agreement must not generate review noise.
+    agree = Event(title="Nespelem Celebration Stickgames", start_date="2026-07-09")
+    fill(agree, dict(read))
+    check("agreement is silent", agree.warnings, [])
+
+    # Contact details are accumulated by the OCR pass; don't clobber them.
+    kept = Event(title="x", start_date="2026-07-09",
+                 details="Contact: Darnell Sam (509) 634-0772")
+    fill(kept, dict(read, details="unrelated blurb"))
+    check("existing details survive", kept.details,
+          "Contact: Darnell Sam (509) 634-0772")
+
+    # A reader that says this is not a handgame event still short-circuits.
+    not_ours = Event(title="Canning Class", start_date="2026-08-25")
+    fill(not_ours, {"is_handgame": False, "title": "Something Else"})
+    check("is_handgame False still stops everything", not_ours.title, "Canning Class")
+
+    # Malformed dates from the reader are still refused.
+    bad = Event(title="x", start_date="2026-07-07")
+    fill(bad, dict(read, start_date="July 9th 2026"))
+    check("a non-ISO date from the reader is ignored", bad.start_date, "2026-07-07")
+
+
 if __name__ == "__main__":
     for fn in [
         test_day_list_is_not_a_year,
@@ -499,6 +569,7 @@ if __name__ == "__main__":
         test_community_flags_are_respected,
         test_hint_cannot_supply_the_keyword,
         test_weekday_contradicts_the_date,
+        test_ocr_does_not_outrank_the_flyer_reader,
     ]:
         fn()
     print(f"\n  {PASS} passed, {FAIL} failed\n")

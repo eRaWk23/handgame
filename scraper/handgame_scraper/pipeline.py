@@ -213,15 +213,42 @@ class Pipeline:
             "tribe": "tribe",
             "details": "details",
         }
+        # Tesseract runs first and fills these in whether or not it read them
+        # correctly. It used to win every field it managed to populate, so a
+        # garbled title and a misread date locked the flyer reader out of the
+        # only two fields worth paying it for: the Nespelem flyer kept OCR's
+        # "July 7" after the reader had correctly read July 9. On these four
+        # fields the reader now wins.
+        overridable = {"title", "start_date", "end_date", "location"}
+        # ...except where a person typed the value in a sidecar note.
+        manual = getattr(event, "_manual_fields", frozenset())
+
         changed = False
         for src_key, attr in mapping.items():
             value = data.get(src_key)
-            if value and not getattr(event, attr):
+            if not value or attr in manual:
+                continue
+            if attr in ("start_date", "end_date"):
+                if not re.match(r"^\d{4}-\d{2}-\d{2}$", str(value)):
+                    continue
+            current = getattr(event, attr)
+            if current and (attr not in overridable or str(current) == str(value)):
+                continue
+            if current:
+                # A disagreement about a date is exactly what sends someone to
+                # an empty gym, so it goes to the reviewer as a warning rather
+                # than being swapped silently.
                 if attr in ("start_date", "end_date"):
-                    if not re.match(r"^\d{4}-\d{2}-\d{2}$", str(value)):
-                        continue
-                setattr(event, attr, str(value))
-                changed = True
+                    event.warnings.append(
+                        f"OCR read {attr.replace('_', ' ')} {current}, flyer "
+                        f"reader read {value}; using the flyer reader"
+                    )
+            setattr(event, attr, str(value))
+            if attr == "title":
+                # Otherwise the OCR pass that runs after this one puts the
+                # garbled title back.
+                event.title_provisional = False
+            changed = True
         if changed:
             event.extraction = "llm"
         if data.get("year_printed") is False:

@@ -142,6 +142,15 @@ reintroduced a real bug — do not adjust the test to match.**
     weekday that contradicts an adjacent date. It only compares *adjacent*
     pairs (a weekday elsewhere on a listing page proves nothing) and it never
     rewrites the date — which of the two was misread is not knowable here.
+12. **OCR must not lock the flyer reader out of a field.** `_fill_from_vision`
+    only wrote to fields that were still empty, and Tesseract always runs
+    first — so whatever OCR produced was final, and the paid vision call was
+    reduced to filling blanks. The Nespelem flyer kept OCR's garbled title and
+    OCR's wrong July 7th even though the reader had returned the correct title
+    and July 9th. The reader now wins on title, dates and location; it never
+    overrules a value typed into a sidecar note (`_manual_fields` on the
+    event), and a date it disagrees with is reported as a warning rather than
+    swapped silently.
 
 ## 6. Decisions made on purpose
 

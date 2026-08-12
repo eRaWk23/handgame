@@ -86,6 +86,20 @@ class InboxSource(Source):
             confidence=0.4,
         )
         event._local_bytes = data  # type: ignore[attr-defined]
+        # Fields a person typed into the sidecar note. The flyer reader is a
+        # better reader than OCR and is allowed to correct OCR, but it must
+        # never overrule a human who looked at the flyer and typed the answer.
+        event._manual_fields = frozenset(  # type: ignore[attr-defined]
+            attr
+            for key, attr in (
+                ("title", "title"),
+                ("date", "start_date"),
+                ("location", "location"),
+                ("tribe", "tribe"),
+                ("details", "details"),
+            )
+            if note.get(key)
+        )
         return event
 
     def _read_note(self, image_path: Path) -> dict[str, str]:
