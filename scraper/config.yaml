@@ -1,0 +1,150 @@
+# handgame.info event collector
+#
+# Add a site: put its home page under sources.calendars.sites AND
+# sources.webpages.sites. The calendar adapter tries the machine-readable
+# feeds first; the webpages adapter is the fallback that reads the HTML.
+#
+# Every site entry can be a bare URL or a block with extra hints:
+#   - url: https://example.org/events
+#     tribe: Colville            # used when the page does not say
+#     location: Nespelem, WA     # used when no city can be found
+#     hint: handgame stickgame   # helps the topic filter on thin pages
+#     follow_links: true         # crawl a few promising internal links
+
+settings:
+  request_delay_seconds: 2.0    # per host; be a good neighbour
+  respect_robots: true
+  cache_ttl_hours: 12
+  cache_dir: .cache
+  output_dir: out
+  ledger_path: state/seen.json
+  min_topic_score: 0.5          # 0-1; raise to cut noise, lower to catch more
+  max_flyers_per_run: 120       # cap on flyer image downloads
+  use_vision_ocr: true          # only active when ANTHROPIC_API_KEY is set
+
+sources:
+
+  # ------------------------------------------------------------------
+  # Machine-readable feeds. Highest quality: exact dates, no guessing.
+  calendars:
+    enabled: true
+    min_topic_score: 0.45
+    sites:
+      - url: https://www.powwows.com
+      - url: https://www.colvilletribes.com
+        tribe: Colville
+        location: Nespelem, WA
+      - url: https://www.spokanetribe.com
+        tribe: Spokane
+        location: Wellpinit, WA
+      - url: https://www.yakama.com
+        tribe: Yakama
+        location: Toppenish, WA
+      - url: https://www.shoshonebannocktribes.com
+        tribe: Shoshone-Bannock
+        location: Fort Hall, ID
+      - url: https://www.umatilla.nsn.us
+        tribe: Umatilla
+        location: Pendleton, OR
+      - url: https://warmsprings-nsn.gov
+        tribe: Warm Springs
+        location: Warm Springs, OR
+      - url: https://csktribes.org
+        tribe: Salish and Kootenai
+        location: Pablo, MT
+      - url: https://www.cdatribe-nsn.gov
+        tribe: Coeur d'Alene
+        location: Plummer, ID
+      - url: https://kalispeltribe.com
+        tribe: Kalispel
+        location: Usk, WA
+      - url: https://nezperce.org
+        tribe: Nez Perce
+        location: Lapwai, ID
+      - url: https://www.blackfeetnation.com
+        tribe: Blackfeet
+        location: Browning, MT
+      - url: https://www.muckleshoot.nsn.us
+        tribe: Muckleshoot
+        location: Auburn, WA
+      - url: https://www.tulaliptribes-nsn.gov
+        tribe: Tulalip
+        location: Tulalip, WA
+
+  # ------------------------------------------------------------------
+  # HTML fallback for the same sites, plus event-listing pages.
+  webpages:
+    enabled: true
+    max_links_per_site: 20
+    min_topic_score: 0.5
+    sites:
+      - url: https://www.powwows.com/calendar/
+        hint: powwow stickgame handgame
+      - url: https://www.crazycrow.com/site/powwow-calendar/
+        hint: powwow stickgame handgame
+      - url: https://www.colvilletribes.com/events
+        tribe: Colville
+        location: Nespelem, WA
+      - url: https://www.spokanetribe.com/events
+        tribe: Spokane
+        location: Wellpinit, WA
+      - url: https://csktribes.org/events
+        tribe: Salish and Kootenai
+        location: Pablo, MT
+      - url: https://www.shoshonebannocktribes.com/events
+        tribe: Shoshone-Bannock
+        location: Fort Hall, ID
+      # Casinos host a lot of these tournaments.
+      - url: https://www.northernquest.com/entertainment
+        location: Airway Heights, WA
+        hint: stickgame handgame tournament
+      - url: https://www.12tribescasino.com
+        tribe: Colville
+        location: Omak, WA
+        hint: stickgame handgame tournament
+      - url: https://www.kalispelcasino.com
+        tribe: Kalispel
+        location: Cusick, WA
+        hint: stickgame handgame tournament
+
+  # ------------------------------------------------------------------
+  # Needs REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET (free script app).
+  reddit:
+    enabled: true
+    allow_unauthenticated: false
+    timeframe: year
+    limit_per_query: 50
+    queries:
+      - handgame
+      - hand game
+      - stickgame
+      - stick game
+      - bone game
+      - slahal
+    subreddits:
+      - IndianCountry
+      - NativeAmerican
+      - Native_American
+      - indigenous
+      - Montana
+      - Idaho
+      - Spokane
+      - Washington
+      - Oregon
+      - britishcolumbia
+      - Saskatchewan
+
+  # ------------------------------------------------------------------
+  # Finds sites not already on the list above.
+  # Needs BRAVE_SEARCH_API_KEY or SERPER_API_KEY (both have free tiers).
+  websearch:
+    enabled: true
+    results_per_query: 15
+    max_pages: 40
+
+  # ------------------------------------------------------------------
+  # Where Facebook and Instagram flyers come in. Drop images or a
+  # links.txt into scraper/inbox/ and they run through the whole pipeline.
+  inbox:
+    enabled: true
+    path: inbox

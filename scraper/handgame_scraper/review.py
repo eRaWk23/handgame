@@ -1,0 +1,435 @@
+"""Builds the review queue: one self-contained HTML file.
+
+Everything is inlined — data, styles, script — so the page works by
+double-clicking it, with no server and no build step, which matches how the
+rest of handgame.info is put together.
+
+Nothing publishes without a human clicking Approve.
+"""
+
+from __future__ import annotations
+
+import json
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+TEMPLATE = """<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Handgame event review queue</title>
+<style>
+  :root {
+    --bg:#f7f4ee; --panel:#fffdf9; --ink:#2c2621; --muted:#6f6558;
+    --line:#e0d7c8; --accent:#8c5a2b; --accent-soft:#f0e5d6;
+    --ok:#3f6f4a; --ok-soft:#e6f0e6; --no:#9a3b32; --no-soft:#f6e5e2;
+    --warn:#8a6516; --warn-soft:#fbf0d8; --shadow:0 1px 3px rgba(60,45,25,.09);
+  }
+  [data-theme="dark"] {
+    --bg:#1c1917; --panel:#262220; --ink:#ece5da; --muted:#a2978a;
+    --line:#3a342f; --accent:#d59b5f; --accent-soft:#33291f;
+    --ok:#8fc79c; --ok-soft:#22301f; --no:#e39a92; --no-soft:#331f1d;
+    --warn:#e0bd71; --warn-soft:#332b18; --shadow:0 1px 3px rgba(0,0,0,.35);
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  header {
+    position:sticky; top:0; z-index:20; background:var(--panel);
+    border-bottom:1px solid var(--line); padding:14px 20px;
+    display:flex; gap:16px; align-items:center; flex-wrap:wrap;
+    box-shadow:var(--shadow);
+  }
+  h1 { font-size:17px; margin:0; font-weight:650; letter-spacing:-.01em; }
+  .sub { color:var(--muted); font-size:13px; }
+  .grow { flex:1; }
+  button {
+    font:inherit; border:1px solid var(--line); background:var(--panel);
+    color:var(--ink); border-radius:7px; padding:7px 13px; cursor:pointer;
+  }
+  button:hover { border-color:var(--accent); }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  button.primary:disabled { opacity:.45; cursor:not-allowed; }
+  main { max-width:1080px; margin:0 auto; padding:22px 20px 120px; }
+
+  .summary {
+    background:var(--panel); border:1px solid var(--line); border-radius:11px;
+    padding:14px 18px; margin-bottom:20px; box-shadow:var(--shadow);
+  }
+  .summary h2 { margin:0 0 10px; font-size:13px; text-transform:uppercase;
+    letter-spacing:.08em; color:var(--muted); font-weight:600; }
+  .figures { display:flex; flex-wrap:wrap; gap:22px; }
+  .figure b { font-size:20px; font-weight:650; display:block; }
+  .figure span { color:var(--muted); font-size:12.5px; }
+
+  .card {
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    margin-bottom:18px; overflow:hidden; box-shadow:var(--shadow);
+    display:grid; grid-template-columns:230px 1fr;
+  }
+  @media (max-width:760px) { .card { grid-template-columns:1fr; } }
+  .card.done { opacity:.42; }
+  .flyer {
+    background:var(--accent-soft); display:flex; align-items:center;
+    justify-content:center; padding:12px; border-right:1px solid var(--line);
+  }
+  .flyer img { max-width:100%; max-height:330px; border-radius:6px; cursor:zoom-in; }
+  .flyer .none { color:var(--muted); font-size:12.5px; text-align:center; padding:26px 8px; }
+  .body { padding:16px 18px; }
+  .toprow { display:flex; align-items:flex-start; gap:10px; margin-bottom:10px; }
+  .title-in {
+    font-size:16.5px; font-weight:650; border:1px solid transparent;
+    background:transparent; color:var(--ink); width:100%; padding:4px 6px;
+    border-radius:6px; font-family:inherit;
+  }
+  .title-in:focus { border-color:var(--line); background:var(--bg); outline:none; }
+  .badge {
+    font-size:11.5px; padding:3px 9px; border-radius:999px; white-space:nowrap;
+    font-weight:600; letter-spacing:.02em;
+  }
+  .b-hi { background:var(--ok-soft); color:var(--ok); }
+  .b-mid { background:var(--warn-soft); color:var(--warn); }
+  .b-lo { background:var(--no-soft); color:var(--no); }
+
+  .fields { display:grid; grid-template-columns:repeat(2,1fr); gap:9px 14px; }
+  @media (max-width:600px) { .fields { grid-template-columns:1fr; } }
+  .field.wide { grid-column:1/-1; }
+  label { display:block; font-size:11.5px; color:var(--muted); margin-bottom:3px;
+    text-transform:uppercase; letter-spacing:.05em; font-weight:600; }
+  input[type=text], input[type=date], textarea {
+    width:100%; padding:7px 9px; border:1px solid var(--line); border-radius:7px;
+    background:var(--bg); color:var(--ink); font:inherit; font-size:14px;
+  }
+  input:focus, textarea:focus { outline:2px solid var(--accent); outline-offset:-1px; }
+  textarea { min-height:62px; resize:vertical; }
+  .required-missing { border-color:var(--no) !important; }
+
+  .flags { margin:11px 0 0; padding:0; list-style:none; }
+  .flags li {
+    background:var(--warn-soft); color:var(--warn); border-radius:7px;
+    padding:7px 11px; font-size:13px; margin-bottom:5px;
+  }
+  .meta { margin-top:11px; font-size:12.5px; color:var(--muted); }
+  .meta a { color:var(--accent); }
+  details.raw { margin-top:9px; font-size:12.5px; color:var(--muted); }
+  details.raw pre {
+    white-space:pre-wrap; background:var(--bg); padding:10px; border-radius:7px;
+    max-height:220px; overflow:auto; border:1px solid var(--line); font-size:12px;
+  }
+  .actions { margin-top:14px; display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+  .approve { background:var(--ok-soft); color:var(--ok); border-color:transparent; font-weight:600; }
+  .reject { background:var(--no-soft); color:var(--no); border-color:transparent; font-weight:600; }
+  .approve[aria-pressed=true] { background:var(--ok); color:#fff; }
+  .reject[aria-pressed=true] { background:var(--no); color:#fff; }
+  .state { font-size:12.5px; color:var(--muted); margin-left:auto; }
+
+  footer {
+    position:fixed; bottom:0; left:0; right:0; background:var(--panel);
+    border-top:1px solid var(--line); padding:12px 20px; display:flex;
+    gap:12px; align-items:center; flex-wrap:wrap; z-index:20;
+  }
+  .empty { text-align:center; padding:70px 20px; color:var(--muted); }
+  dialog {
+    border:1px solid var(--line); border-radius:12px; background:var(--panel);
+    color:var(--ink); max-width:440px; padding:22px; box-shadow:0 8px 40px rgba(0,0,0,.2);
+  }
+  dialog::backdrop { background:rgba(0,0,0,.45); }
+  dialog h3 { margin:0 0 10px; font-size:16px; }
+  dialog p { font-size:13.5px; color:var(--muted); margin:0 0 14px; }
+  dialog input { margin-bottom:11px; }
+  .lightbox { border:none; background:transparent; max-width:94vw; max-height:94vh; padding:0; }
+  .lightbox img { max-width:94vw; max-height:94vh; border-radius:8px; }
+  .log { font-size:12.5px; max-height:120px; overflow:auto; }
+  .log div { padding:2px 0; }
+  .log .err { color:var(--no); }
+  .log .ok { color:var(--ok); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Handgame event review</h1>
+    <div class="sub">Scraped __GENERATED__ · nothing goes live until you approve it</div>
+  </div>
+  <div class="grow"></div>
+  <button onclick="toggleTheme()">Light / dark</button>
+</header>
+
+<main>
+  <div class="summary">
+    <h2>This run</h2>
+    <div class="figures" id="figures"></div>
+  </div>
+  <div id="cards"></div>
+</main>
+
+<footer>
+  <span id="tally" class="sub"></span>
+  <div class="grow"></div>
+  <button onclick="downloadApproved()">Download approved.json</button>
+  <button class="primary" id="publishBtn" onclick="openPublish()">Publish approved to site</button>
+</footer>
+
+<dialog id="publishDlg">
+  <h3>Publish to handgame.info</h3>
+  <p>These go straight into your Supabase <code>events</code> table, the same
+     way the public submission form does. Your key is held in this page only
+     for as long as it is open and is never saved anywhere.</p>
+  <input type="text" id="sbUrl" placeholder="https://yourproject.supabase.co">
+  <input type="password" id="sbKey" placeholder="Supabase anon / publishable key">
+  <div class="log" id="publishLog"></div>
+  <div style="display:flex;gap:9px;margin-top:12px">
+    <button onclick="document.getElementById('publishDlg').close()">Cancel</button>
+    <div class="grow"></div>
+    <button class="primary" id="goBtn" onclick="doPublish()">Publish</button>
+  </div>
+</dialog>
+
+<dialog id="lightbox" class="lightbox" onclick="this.close()"><img id="lightboxImg" alt=""></dialog>
+
+<script>
+const DATA = __DATA__;
+const events = DATA.events.map((e, i) => ({ ...e, _i: i, _state: 'pending' }));
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+function badge(c) {
+  if (c >= 0.75) return ['b-hi', 'looks solid'];
+  if (c >= 0.5) return ['b-mid', 'check it'];
+  return ['b-lo', 'needs a look'];
+}
+
+function renderFigures() {
+  const s = DATA.stats || {};
+  const rows = [
+    [s.queued_for_review, 'waiting for you'],
+    [s.collected, 'candidates found'],
+    [s.skipped_already_on_site, 'already on the site'],
+    [s.skipped_flagged_by_community, 'flagged off by the community'],
+    [s.skipped_seen_in_previous_runs, 'seen in earlier runs'],
+    [s.merged_duplicates_in_batch, 'duplicates merged'],
+    [s.rejected_off_topic, 'not handgame'],
+    [s.rejected_past_dates, 'already happened'],
+    [s.rejected_incomplete, 'missing date or place'],
+  ];
+  document.getElementById('figures').innerHTML = rows
+    .map(([n, label]) => `<div class="figure"><b>${n ?? 0}</b><span>${label}</span></div>`)
+    .join('');
+}
+
+function card(ev) {
+  const [cls, text] = badge(ev.confidence);
+  const flyer = ev.flyer_url && !ev.flyer_url.startsWith('local://')
+    ? `<img src="${esc(ev.flyer_url)}" alt="Flyer" loading="lazy"
+         onclick="zoom(this.src)" onerror="this.replaceWith(Object.assign(
+         document.createElement('div'),{className:'none',textContent:'flyer image would not load'}))">`
+    : `<div class="none">${ev.flyer_url ? 'local file:<br>' + esc(ev.flyer_url.replace('local://','')) : 'no flyer'}</div>`;
+
+  const flags = (ev.warnings || []).length
+    ? `<ul class="flags">${ev.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : '';
+
+  const src = ev.source_url && ev.source_url.startsWith('http')
+    ? `<a href="${esc(ev.source_url)}" target="_blank" rel="noopener">${esc(ev.source)}</a>`
+    : esc(ev.source);
+
+  return `<div class="card" id="card-${ev._i}">
+    <div class="flyer">${flyer}</div>
+    <div class="body">
+      <div class="toprow">
+        <input class="title-in" value="${esc(ev.title)}" data-f="title" data-i="${ev._i}"
+               placeholder="Event title (required)">
+        <span class="badge ${cls}">${text}</span>
+      </div>
+      <div class="fields">
+        <div class="field"><label>Start date</label>
+          <input type="date" value="${esc(ev.start_date)}" data-f="start_date" data-i="${ev._i}"></div>
+        <div class="field"><label>End date</label>
+          <input type="date" value="${esc(ev.end_date || '')}" data-f="end_date" data-i="${ev._i}"></div>
+        <div class="field"><label>Location</label>
+          <input type="text" value="${esc(ev.location)}" data-f="location" data-i="${ev._i}"
+                 placeholder="City, State"></div>
+        <div class="field"><label>Tribe or group</label>
+          <input type="text" value="${esc(ev.tribe || '')}" data-f="tribe" data-i="${ev._i}"></div>
+        <div class="field wide"><label>Details</label>
+          <textarea data-f="details" data-i="${ev._i}">${esc(ev.details || '')}</textarea></div>
+        <div class="field wide"><label>Flyer URL</label>
+          <input type="text" value="${esc(ev.flyer_url || '')}" data-f="flyer_url" data-i="${ev._i}"></div>
+      </div>
+      ${flags}
+      <div class="meta">From ${src} · read by ${esc(ev.extraction)} · confidence ${Math.round(ev.confidence * 100)}%</div>
+      ${ev.raw_text ? `<details class="raw"><summary>Text the reader saw</summary><pre>${esc(ev.raw_text)}</pre></details>` : ''}
+      <div class="actions">
+        <button class="approve" onclick="setState(${ev._i},'approved')" aria-pressed="false">Approve</button>
+        <button class="reject" onclick="setState(${ev._i},'rejected')" aria-pressed="false">Reject</button>
+        <span class="state" id="state-${ev._i}">not decided</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function render() {
+  renderFigures();
+  const host = document.getElementById('cards');
+  host.innerHTML = events.length
+    ? events.map(card).join('')
+    : `<div class="empty"><h2>Nothing new this run</h2>
+       <p>Every event found was already on the site or already reviewed.</p></div>`;
+  host.addEventListener('input', e => {
+    const t = e.target;
+    if (!t.dataset || t.dataset.i === undefined) return;
+    events[+t.dataset.i][t.dataset.f] = t.value;
+    t.classList.remove('required-missing');
+  });
+  tally();
+}
+
+function setState(i, state) {
+  const ev = events[i];
+  ev._state = ev._state === state ? 'pending' : state;
+  const card = document.getElementById('card-' + i);
+  card.classList.toggle('done', ev._state !== 'pending');
+  card.querySelector('.approve').setAttribute('aria-pressed', ev._state === 'approved');
+  card.querySelector('.reject').setAttribute('aria-pressed', ev._state === 'rejected');
+  document.getElementById('state-' + i).textContent =
+    ev._state === 'pending' ? 'not decided' : ev._state;
+  tally();
+}
+
+function tally() {
+  const a = events.filter(e => e._state === 'approved').length;
+  const r = events.filter(e => e._state === 'rejected').length;
+  document.getElementById('tally').textContent =
+    `${a} approved · ${r} rejected · ${events.length - a - r} still to decide`;
+  document.getElementById('publishBtn').disabled = a === 0;
+}
+
+function approved() {
+  return events.filter(e => e._state === 'approved');
+}
+
+function validate(list) {
+  let ok = true;
+  for (const ev of list) {
+    for (const f of ['title', 'start_date', 'location']) {
+      if (!String(ev[f] || '').trim()) {
+        ok = false;
+        const el = document.querySelector(`[data-i="${ev._i}"][data-f="${f}"]`);
+        if (el) el.classList.add('required-missing');
+      }
+    }
+  }
+  if (!ok) alert('Some approved events are missing a title, start date, or location. They are outlined in red.');
+  return ok;
+}
+
+function downloadApproved() {
+  const list = approved();
+  if (!list.length) return alert('Nothing approved yet.');
+  if (!validate(list)) return;
+  const payload = list.map(e => ({
+    title: e.title, start_date: e.start_date, end_date: e.end_date || null,
+    location: e.location, tribe: e.tribe || null, details: e.details || null,
+    flyer_url: e.flyer_url || null,
+  }));
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'approved.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function openPublish() {
+  if (!validate(approved())) return;
+  document.getElementById('publishLog').innerHTML = '';
+  document.getElementById('publishDlg').showModal();
+}
+
+async function doPublish() {
+  const url = document.getElementById('sbUrl').value.trim().replace(/\\/$/, '');
+  const key = document.getElementById('sbKey').value.trim();
+  const log = document.getElementById('publishLog');
+  if (!url || !key) { log.innerHTML = '<div class="err">Enter both the project URL and the key.</div>'; return; }
+
+  const btn = document.getElementById('goBtn');
+  btn.disabled = true;
+  const list = approved();
+  let done = 0;
+
+  for (const ev of list) {
+    const row = {
+      title: ev.title, start_date: ev.start_date, end_date: ev.end_date || null,
+      location: ev.location, tribe: ev.tribe || null, details: ev.details || null,
+      flyer_url: ev.flyer_url || null,
+    };
+    // You approved it here, so mark it approved the way admin.html does. If
+    // the column is not writable by this key, fall back to the exact payload
+    // the public submission form sends.
+    const post = body => fetch(url + '/rest/v1/events', {
+      method: 'POST',
+      headers: { apikey: key, Authorization: 'Bearer ' + key,
+                 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify([body]),
+    });
+    try {
+      let res = await post({ ...row, approved: true });
+      if (!res.ok) res = await post(row);
+      if (res.ok) {
+        done++;
+        log.innerHTML += `<div class="ok">added: ${esc(ev.title)}</div>`;
+        setState(ev._i, 'published');
+        document.getElementById('state-' + ev._i).textContent = 'published';
+      } else {
+        log.innerHTML += `<div class="err">${esc(ev.title)} — ${res.status} ${esc((await res.text()).slice(0, 120))}</div>`;
+      }
+    } catch (err) {
+      log.innerHTML += `<div class="err">${esc(ev.title)} — ${esc(err.message)}</div>`;
+    }
+    log.scrollTop = log.scrollHeight;
+  }
+  log.innerHTML += `<div><b>${done} of ${list.length} published.</b></div>`;
+  btn.disabled = false;
+  tally();
+}
+
+function zoom(src) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').showModal();
+}
+function toggleTheme() {
+  const el = document.documentElement;
+  el.dataset.theme = el.dataset.theme === 'dark' ? 'light' : 'dark';
+}
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  document.documentElement.dataset.theme = 'dark';
+}
+render();
+</script>
+</body>
+</html>
+"""
+
+
+def build_review_page(result: dict[str, Any], out_path: Path) -> Path:
+    """Write the review queue HTML for one run's results."""
+    generated = result.get("generated_at", datetime.now().isoformat(timespec="seconds"))
+    try:
+        pretty = datetime.fromisoformat(generated).strftime("%B %-d, %Y at %-I:%M %p")
+    except (ValueError, TypeError):
+        pretty = generated
+
+    payload = json.dumps(
+        {"stats": result.get("stats", {}), "events": result.get("events", [])},
+        ensure_ascii=False,
+    ).replace("</", "<\\/")
+
+    html = TEMPLATE.replace("__DATA__", payload).replace("__GENERATED__", pretty)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(html, encoding="utf-8")
+    return out_path

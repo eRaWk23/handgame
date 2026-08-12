@@ -1,0 +1,17 @@
+# Downloaded page and image cache; safe to delete any time.
+.cache/
+
+# Flyers you drop in are yours, not the repo's.
+inbox/*
+!inbox/README.txt
+!inbox/processed/
+inbox/processed/*
+!inbox/processed/.gitkeep
+
+__pycache__/
+*.pyc
+.env
+
+# out/pending.json and out/review.html ARE tracked on purpose: the scheduled
+# run commits them so the pull request shows exactly what is waiting.
+out/review-demo.html
