@@ -151,7 +151,38 @@ KNOWN_PLACES = {
     "chase": "Chase, British Columbia",
     "cranbrook": "Cranbrook, British Columbia",
     "williams lake": "Williams Lake, British Columbia",
+    # California. Handgame is strong in the north state, and the first live
+    # run proved the gap: the Redding Rancheria flyer parsed a correct date
+    # and then lost its location entirely.
+    "redding": "Redding, California", "oroville": "Oroville, California",
+    "covelo": "Covelo, California", "hoopa": "Hoopa, California",
+    "happy camp": "Happy Camp, California", "alturas": "Alturas, California",
+    "susanville": "Susanville, California", "tuolumne": "Tuolumne, California",
+    "colusa": "Colusa, California", "santa ynez": "Santa Ynez, California",
+    # Great Basin.
+    "fort duchesne": "Fort Duchesne, Utah", "ft duchesne": "Fort Duchesne, Utah",
+    "schurz": "Schurz, Nevada", "mcdermitt": "McDermitt, Nevada",
+    "wadsworth": "Wadsworth, Nevada", "elko": "Elko, Nevada",
+    "reno": "Reno, Nevada",
+    # Alberta and Saskatchewan. Same gap as California: the Whitefish Lake
+    # flyer gave a clean July 3rd and no location at all.
+    "goodfish lake": "Goodfish Lake, Alberta",
+    "saddle lake": "Saddle Lake, Alberta",
+    "maskwacis": "Maskwacis, Alberta", "hobbema": "Maskwacis, Alberta",
+    "siksika": "Siksika, Alberta", "standoff": "Standoff, Alberta",
+    "cardston": "Cardston, Alberta", "morley": "Morley, Alberta",
+    "lethbridge": "Lethbridge, Alberta",
+    "onion lake": "Onion Lake, Saskatchewan",
+    "north battleford": "North Battleford, Saskatchewan",
+    # Washington.
+    "lummi": "Lummi, Washington",
 }
+# Deliberately NOT listed: single-token names that are common surnames —
+# Nixon, Fallon, Sparks. This table is the fallback used when a flyer names
+# no state at all, and it matches a bare word anywhere in the text. Memorial
+# tournaments here are routinely named after a person, so "Nixon Memorial
+# Handgame" would otherwise be placed in Nixon, Nevada. Add a town only when
+# its name is unlikely to appear as somebody's name.
 
 _ORDINAL = re.compile(r"(\d{1,2})(?:st|nd|rd|th)\b", re.I)
 _TIME_RE = re.compile(r"\b\d{1,2}\s*[:.]\s*\d{2}\s*(?:am|pm)?\b|\b\d{1,2}\s*(?:am|pm)\b", re.I)

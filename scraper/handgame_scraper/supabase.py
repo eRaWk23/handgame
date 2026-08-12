@@ -210,10 +210,20 @@ class Supabase:
             data=image_bytes,
             timeout=120,
         )
+        public = f"{self.url}/storage/v1/object/public/{FLYER_BUCKET}/{filename}"
+        # x-upsert is false on purpose, so re-publishing the same file comes
+        # back as a conflict rather than overwriting. The name is derived from
+        # the event fingerprint, so a conflict means this exact flyer is
+        # already mirrored — that is success, not failure. It matters because
+        # the publishable key can upload but cannot delete: there is no way to
+        # clean up after a needless re-upload.
+        if resp.status_code == 409:
+            log.info("flyer already mirrored, reusing it: %s", filename)
+            return public
         if resp.status_code >= 400:
             log.error("flyer upload failed %s: %s", resp.status_code, resp.text[:300])
             return None
-        return f"{self.url}/storage/v1/object/public/{FLYER_BUCKET}/{filename}"
+        return public
 
 
 def _as_date_str(value: Any) -> Optional[str]:

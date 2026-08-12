@@ -196,10 +196,17 @@ Do not undo these without a reason:
       site with no feed at all. Nez Perce was pruned once on that mistake and
       had to be restored. Confirm a feed is absent by requesting the endpoint
       directly before removing a site.
-- [ ] **Flyer mirroring is written but unused.** `supabase.upload_flyer()`
-      exists; the pipeline does not call it. Remote flyers rot, and a calendar
-      of broken images is bad. Worth wiring into the approve step, which needs
-      the storage bucket to accept writes from the anon key.
+- [x] **Flyer mirroring is wired.** `run.py publish` now copies each event's
+      flyer into `event-flyers` before inserting, and rewrites `flyer_url` to
+      the mirrored copy. `--no-mirror` opts out. Tested 2026-08-12: the
+      publishable key **can** upload to the bucket (200), so no policy change
+      is needed. It **cannot** delete (403) — which is why object names are
+      derived from the event fingerprint and `x-upsert` stays false: a repeat
+      publish maps to the same object and a 409 is treated as success, because
+      there is no way to clean up a stray upload. A mirroring failure keeps
+      the original URL rather than dropping the event.
+      One stray test object, `_write-test-delete-me.txt`, was left in the
+      bucket by that permission check and needs deleting from the dashboard.
 - [ ] **Vision OCR is still untested, and Tesseract alone is not enough.**
       Five real flyers were run through `inbox/` on 2026-08-12 with no
       `ANTHROPIC_API_KEY`, so Tesseract handled them alone. All five were
@@ -208,13 +215,34 @@ Do not undo these without a reason:
       spacing, one lost the word "stickgame" to stylised type, and one had a
       digit misread — see landmine 11. Set `ANTHROPIC_API_KEY` before judging
       this path; the vision call at `pipeline.py:141` is wired and ready.
-- [ ] **`KNOWN_PLACES` in `extract.py` is Pacific Northwest and Plateau
-      heavy.** Fine for now — that is where handgame concentrates — but it will
-      miss California, Great Basin, and prairie events. Extend as needed.
+- [x] **`KNOWN_PLACES` covers California, the Great Basin and the prairies.**
+      Extended 2026-08-12 after two real flyers (Redding Rancheria, Whitefish
+      Lake #128) parsed a clean date and no location at all. Note the rule
+      recorded there: this table is a fallback that matches a bare word
+      anywhere in the text, so single-token common surnames (Nixon, Fallon,
+      Sparks) are deliberately excluded — memorial tournaments here are named
+      after people, and "Nixon Memorial Handgame" must not resolve to Nevada.
 - [ ] **No alert when a run finds nothing for several cycles in a row.** That
       is the signature of every source quietly breaking at once.
 - [ ] Consider whether `approved` should become the real gate (see §3), which
-      is a site change, not a collector change.
+      is a site change, not a collector change. Measured 2026-08-12: **all 11
+      rows are `approved = true`; none are false, none are null.** So the
+      backfill §3 warns about is already satisfied for existing rows, and
+      adding `.eq('approved', true)` to `script.js` today would hide nothing.
+      That is not the whole job, though. `submission.html` inserts without an
+      `approved` key, so what new submissions get depends on the column
+      default, and the default could not be read with the publishable key —
+      the PostgREST schema endpoint requires a secret key. Check it in the
+      dashboard before doing anything, because it decides the order:
+        * default `true`  → the filter is safe but pointless; the gate only
+          becomes real once the default is changed to false, and from that
+          moment every public submission needs an admin action or it never
+          appears. Change the default first, then add the filter.
+        * default `false`/null → **do not add the filter yet.** Every
+          submission since the column was added would already be invisible;
+          backfill those to true first, then add the filter.
+      Getting the order wrong in the second case silently hides real events
+      that are already on the calendar today.
 
 ## 8. Commands
 

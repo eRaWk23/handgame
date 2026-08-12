@@ -1,5 +1,7 @@
-# Downloaded page and image cache; safe to delete any time.
-.cache/
+# Downloaded page and image cache; safe to delete any time. The glob
+# matters: throwaway probe runs write to .cache2/, .cache3/ and the
+# like, and a bare .cache/ let one of those be committed once.
+.cache*/
 
 # Flyers you drop in are yours, not the repo's.
 inbox/*

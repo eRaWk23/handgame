@@ -514,7 +514,8 @@ def test_ocr_does_not_outrank_the_flyer_reader():
     }
 
     # The real failure: OCR's junk title and wrong date must both be replaced.
-    ev = Event(title="ae a i om Lelebraliogse", start_date="2026-07-07")
+    ev = Event(title="ae a i om Lelebraliogse", start_date="2026-07-07",
+               source="inbox", extraction="ocr")
     fill(ev, dict(read))
     check("the garbled title is replaced", ev.title, "Nespelem Celebration Stickgames")
     check("the misread date is corrected", ev.start_date, "2026-07-09")
@@ -525,7 +526,8 @@ def test_ocr_does_not_outrank_the_flyer_reader():
 
     # A person who typed the answer outranks any reader.
     typed = Event(title="38th Annual Labor Day Stickgame",
-                  start_date="2026-09-05", location="Nespelem, WA")
+                  start_date="2026-09-05", location="Nespelem, WA",
+                  source="inbox", extraction="ocr")
     typed._manual_fields = frozenset({"title", "start_date", "location"})
     fill(typed, dict(read))
     check("a sidecar title is never overruled",
@@ -534,26 +536,106 @@ def test_ocr_does_not_outrank_the_flyer_reader():
     check("and overruling nothing raises no warning", typed.warnings, [])
 
     # Agreement must not generate review noise.
-    agree = Event(title="Nespelem Celebration Stickgames", start_date="2026-07-09")
+    agree = Event(title="Nespelem Celebration Stickgames",
+                  start_date="2026-07-09", source="inbox", extraction="ocr")
     fill(agree, dict(read))
     check("agreement is silent", agree.warnings, [])
 
     # Contact details are accumulated by the OCR pass; don't clobber them.
-    kept = Event(title="x", start_date="2026-07-09",
+    kept = Event(title="x", start_date="2026-07-09", source="inbox",
                  details="Contact: Darnell Sam (509) 634-0772")
     fill(kept, dict(read, details="unrelated blurb"))
     check("existing details survive", kept.details,
           "Contact: Darnell Sam (509) 634-0772")
 
     # A reader that says this is not a handgame event still short-circuits.
-    not_ours = Event(title="Canning Class", start_date="2026-08-25")
+    not_ours = Event(title="Canning Class", start_date="2026-08-25", source="inbox")
     fill(not_ours, {"is_handgame": False, "title": "Something Else"})
     check("is_handgame False still stops everything", not_ours.title, "Canning Class")
 
     # Malformed dates from the reader are still refused.
-    bad = Event(title="x", start_date="2026-07-07")
+    bad = Event(title="x", start_date="2026-07-07", source="inbox")
     fill(bad, dict(read, start_date="July 9th 2026"))
     check("a non-ISO date from the reader is ignored", bad.start_date, "2026-07-07")
+
+    # A machine-readable feed states the date; the reader is looking at a
+    # picture of it. An image read must not overrule a feed.
+    feed = Event(title="Fall Handgame Tournament", start_date="2026-10-17",
+                 source="calendars", extraction="structured", confidence=0.92)
+    fill(feed, dict(read, title="Reader Title", start_date="2026-10-19"))
+    check("a feed date is not overruled by the reader", feed.start_date, "2026-10-17")
+    check("nor is a feed title", feed.title, "Fall Handgame Tournament")
+    check("but the reader still fills what the feed left empty",
+          feed.location, "Nespelem, WA")
+
+
+def test_mirroring_never_costs_us_an_event():
+    """13. mirroring a flyer must not be able to break a publish.
+
+    upload_flyer existed but nothing called it, so every published event
+    linked to a flyer on somebody else's server. Those rot, and a calendar
+    of broken images is worse than one with none.
+
+    Wiring it in adds a network call to the publish path, so the rules are:
+    a failure keeps the original URL rather than losing the event, the same
+    event always maps to the same object name, and a repeat upload is a
+    success — the publishable key can write to the bucket but cannot delete,
+    so there is no cleaning up after a needless re-upload.
+    """
+    print("\n13. a flyer that will not mirror never costs us the event")
+    import run
+
+    class FakeSB:
+        url = "https://x.supabase.co"
+
+        def __init__(self, ok=True):
+            self.ok, self.calls = ok, []
+
+        def upload_flyer(self, data, name, content_type="image/jpeg"):
+            self.calls.append(name)
+            return f"{self.url}/storage/v1/object/public/event-flyers/{name}" if self.ok else None
+
+    class FakeFetch:
+        def __init__(self, data=b"IMG"):
+            self.data = data
+
+        def get_image(self, url, **kw):
+            return self.data
+
+    def ev(flyer):
+        return Event(title="Fall Handgame Tournament", start_date="2026-10-17",
+                     location="Keller, WA", flyer_url=flyer).tidy()
+
+    remote = ev("https://other.example/flyers/a.JPG")
+    sb = FakeSB()
+    out = run.mirror_flyer(sb, FakeFetch(), remote)
+    check_true("a remote flyer is mirrored", out and "event-flyers" in out)
+    check_true("the object keeps the image extension", sb.calls[0].endswith(".jpg"))
+
+    check("a local file is not uploaded",
+          run.mirror_flyer(FakeSB(), FakeFetch(), ev("local:///tmp/x.jpg")), None)
+    check("an event with no flyer is skipped",
+          run.mirror_flyer(FakeSB(), FakeFetch(), ev(None)), None)
+    check("a flyer already in our bucket is not re-uploaded",
+          run.mirror_flyer(FakeSB(), FakeFetch(),
+                           ev("https://x.supabase.co/storage/v1/object/public/event-flyers/z.jpg")),
+          None)
+    check("a non-image url is left alone",
+          run.mirror_flyer(FakeSB(), FakeFetch(), ev("https://other.example/a.pdf")), None)
+
+    # The important one: a failed upload must not lose the flyer or the event.
+    keep = ev("https://other.example/a.jpg")
+    check("a failed upload returns nothing",
+          run.mirror_flyer(FakeSB(ok=False), FakeFetch(), keep), None)
+    check("and the original url is untouched",
+          keep.flyer_url, "https://other.example/a.jpg")
+
+    # Same event twice must not create a second object; the key cannot delete.
+    one, two = ev("https://o.example/a.jpg"), ev("https://o.example/a.jpg")
+    a, b = FakeSB(), FakeSB()
+    run.mirror_flyer(a, FakeFetch(), one)
+    run.mirror_flyer(b, FakeFetch(), two)
+    check("re-publishing maps to the same object", a.calls[0], b.calls[0])
 
 
 if __name__ == "__main__":
@@ -570,6 +652,7 @@ if __name__ == "__main__":
         test_hint_cannot_supply_the_keyword,
         test_weekday_contradicts_the_date,
         test_ocr_does_not_outrank_the_flyer_reader,
+        test_mirroring_never_costs_us_an_event,
     ]:
         fn()
     print(f"\n  {PASS} passed, {FAIL} failed\n")

@@ -80,6 +80,16 @@ def test_locations() -> None:
         ("Fort Hall, ID", "Fort Hall, Idaho"),
         ("at the Spokane Tribal Gym", "the Spokane Tribal Gym"),
         ("Kamloops, BC", "Kamloops, British Columbia"),
+        # Regions the table missed until the first live run: real flyers from
+        # California and Alberta parsed a clean date and no location at all.
+        ("Big Time Handgame at Win-River Resort in Redding", "Redding, California"),
+        ("Treaty Day Celebration in Goodfish Lake", "Goodfish Lake, Alberta"),
+        ("Handgame at Ft Duchesne", "Fort Duchesne, Utah"),
+        ("Stommish grounds, Lummi", "Lummi, Washington"),
+        # A person's name must not be read as a town. Memorial tournaments are
+        # common here, so single-token surnames are kept out of KNOWN_PLACES.
+        ("Winston Sam Nixon Memorial Handgame Tournament", None),
+        ("Sparks fly at the annual tournament", None),
     ]
     for text, want in cases:
         check(f"location {text!r}", find_location(text), want)

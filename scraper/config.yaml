@@ -96,10 +96,6 @@ sources:
       - url: https://cskt.org/events
         tribe: Salish and Kootenai
         location: Pablo, MT
-      # Replaces the dead www.umatilla.nsn.us. Paginated listing, 29 pages.
-      - url: https://ctuir.org/events/
-        tribe: Umatilla
-        location: Pendleton, OR
       - url: https://warmsprings-nsn.gov/events/
         tribe: Warm Springs
         location: Warm Springs, OR
@@ -132,6 +128,18 @@ sources:
     #                                  404. The site is now a regalia shop with
     #                                  photo galleries only; no calendar exists
     #                                  at any of five probed paths.
+    #   ctuir.org/events/              THE ONE THAT GOT AWAY. Replaces the dead
+    #                                  umatilla.nsn.us and is the largest
+    #                                  listing found - the page reports 29
+    #                                  pages of events. It is rendered entirely
+    #                                  in JavaScript: a static fetch returns
+    #                                  804 characters and no events. There is
+    #                                  no feed behind it either - no /wp-json/
+    #                                  root at all, no sitemap.xml, and
+    #                                  ?alttemplate=EventCalendar is JS too.
+    #                                  Reaching it needs a headless browser,
+    #                                  which is a new dependency and a bigger
+    #                                  decision than this file - see HANDOFF.
     #   www.shoshonebannocktribes.com  host refuses connections on :443
     #   www.cdatribe-nsn.gov           no public events page in navigation
     #   www.muckleshoot.nsn.us         events live behind a member portal

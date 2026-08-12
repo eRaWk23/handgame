@@ -222,6 +222,18 @@ class Pipeline:
         overridable = {"title", "start_date", "end_date", "location"}
         # ...except where a person typed the value in a sidecar note.
         manual = getattr(event, "_manual_fields", frozenset())
+        # ...and except when the value came from a machine-readable feed. A
+        # feed states the date; the reader is looking at a picture of it. The
+        # feed wins, and the reader only fills the gaps the feed left. Without
+        # this, a feed event with a flyer image and no venue — a shape all
+        # three live feeds produce — would have its exact date replaced by an
+        # image read.
+        #
+        # Keyed on the source, not on extraction: `extraction` defaults to
+        # "structured" on the dataclass and webpages._from_html sets it too
+        # for plain regex scraping, so it does not actually mean "came from a
+        # feed". `calendars` is the only adapter that reads iCal and REST.
+        from_feed = event.source == "calendars"
 
         changed = False
         for src_key, attr in mapping.items():
@@ -232,7 +244,9 @@ class Pipeline:
                 if not re.match(r"^\d{4}-\d{2}-\d{2}$", str(value)):
                     continue
             current = getattr(event, attr)
-            if current and (attr not in overridable or str(current) == str(value)):
+            if current and (
+                from_feed or attr not in overridable or str(current) == str(value)
+            ):
                 continue
             if current:
                 # A disagreement about a date is exactly what sends someone to

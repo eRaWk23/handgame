@@ -15,13 +15,16 @@ import argparse
 import json
 import logging
 import sys
+import urllib.parse
 from pathlib import Path
+from typing import Optional
 
 import yaml
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
+from handgame_scraper.fetch import Fetcher  # noqa: E402
 from handgame_scraper.ledger import Ledger  # noqa: E402
 from handgame_scraper.models import Event  # noqa: E402
 from handgame_scraper.pipeline import Pipeline  # noqa: E402
@@ -92,6 +95,41 @@ def cmd_scrape(args: argparse.Namespace) -> int:
     return 0
 
 
+#: Extension -> content type for flyers we mirror. Anything else is left on
+#: whatever server it came from rather than guessing at its type.
+_FLYER_TYPES = {
+    ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
+    ".webp": "image/webp", ".gif": "image/gif",
+}
+
+
+def mirror_flyer(supabase: Supabase, fetcher, event: Event) -> Optional[str]:
+    """Copy an event's flyer into our own bucket and return the new URL.
+
+    Flyers linked on someone else's server rot, and a calendar of broken
+    images is worse than a calendar with none. Returns None when there is
+    nothing to do or the copy failed — the caller keeps the original URL,
+    because a flyer that is merely at risk beats no event at all.
+    """
+    url = event.flyer_url
+    if not url or url.startswith("local://"):
+        return None
+    if supabase.url and url.startswith(f"{supabase.url}/storage/"):
+        return None  # already ours; mirroring it again would be a no-op
+    suffix = Path(urllib.parse.urlsplit(url).path).suffix.lower()
+    content_type = _FLYER_TYPES.get(suffix)
+    if not content_type:
+        return None
+    image = fetcher.get_image(url)
+    if not image:
+        return None
+    # Fingerprint-derived so the same event always maps to the same object,
+    # which is what makes a re-publish idempotent.
+    return supabase.upload_flyer(
+        image, f"{event.fingerprint}{suffix}", content_type=content_type
+    )
+
+
 def cmd_publish(args: argparse.Namespace) -> int:
     path = Path(args.file)
     if not path.exists():
@@ -104,10 +142,21 @@ def cmd_publish(args: argparse.Namespace) -> int:
     if not supabase.configured:
         raise SystemExit("set SUPABASE_URL and SUPABASE_ANON_KEY first")
 
-    added = failed = 0
+    fetcher = Fetcher(cache_dir=None)
+    added = failed = mirrored = 0
     for row in rows:
         event = Event.from_dict(row)
         try:
+            # Before inserting, not after: if mirroring throws, the event has
+            # not been published yet and re-running the file is still safe.
+            if not args.no_mirror:
+                try:
+                    hosted = mirror_flyer(supabase, fetcher, event)
+                    if hosted:
+                        event.flyer_url = hosted
+                        mirrored += 1
+                except Exception as exc:  # noqa: BLE001
+                    print(f"  note    flyer not mirrored ({exc}); keeping original")
             supabase.insert_event(event)
             added += 1
             print(f"  added   {event.start_date}  {event.title}")
@@ -116,7 +165,8 @@ def cmd_publish(args: argparse.Namespace) -> int:
             # user unable to safely re-run it without double-inserting.
             failed += 1
             print(f"  FAILED  {event.title}: {exc}")
-    print(f"\n  {added} added, {failed} failed\n")
+    note = f", {mirrored} flyer(s) mirrored" if mirrored else ""
+    print(f"\n  {added} added, {failed} failed{note}\n")
     return 1 if failed else 0
 
 
@@ -165,6 +215,11 @@ def main(argv: list[str] | None = None) -> int:
 
     p_pub = sub.add_parser("publish", help="insert reviewed events into Supabase")
     p_pub.add_argument("file", help="approved.json from the review page")
+    p_pub.add_argument(
+        "--no-mirror",
+        action="store_true",
+        help="keep flyer_url pointing at the original host",
+    )
     p_pub.set_defaults(func=cmd_publish)
 
     p_status = sub.add_parser("status", help="show what the ledger remembers")

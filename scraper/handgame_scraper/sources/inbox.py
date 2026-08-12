@@ -140,7 +140,7 @@ class InboxSource(Source):
 
             is_image = Path(url.split("?")[0]).suffix.lower() in IMAGE_EXT
             if is_image:
-                yield self._event(
+                linked = self._event(
                     title=note or "Flyer from pasted link",
                     flyer_url=url,
                     source_url=url,
@@ -148,6 +148,14 @@ class InboxSource(Source):
                     extraction="manual",
                     confidence=0.4,
                 )
+                # A note typed after the URL is the same human intent as a
+                # sidecar file, and gets the same protection from being
+                # overwritten by the flyer reader.
+                if note:
+                    linked._manual_fields = frozenset(  # type: ignore[attr-defined]
+                        {"title", "details"}
+                    )
+                yield linked
                 continue
 
             # A non-image link: fetch the page and let the generic extractors
