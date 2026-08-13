@@ -1,0 +1,36 @@
+{
+  "bucket": "event-flyers",
+  "updated": "2026-08-13T03:50:22Z",
+  "objects": {
+    "1781461371442.jpg": {
+      "first_backed_up": "2026-08-13T03:50:21Z",
+      "size": 843548,
+      "in_bucket": true,
+      "last_seen": "2026-08-13T03:50:22Z"
+    },
+    "1781467875790.jpeg": {
+      "first_backed_up": "2026-08-13T03:50:21Z",
+      "size": 399510,
+      "in_bucket": true,
+      "last_seen": "2026-08-13T03:50:22Z"
+    },
+    "1781474102998.jpeg": {
+      "first_backed_up": "2026-08-13T03:50:21Z",
+      "size": 291657,
+      "in_bucket": true,
+      "last_seen": "2026-08-13T03:50:22Z"
+    },
+    "1781474337352.jpeg": {
+      "first_backed_up": "2026-08-13T03:50:22Z",
+      "size": 179268,
+      "in_bucket": true,
+      "last_seen": "2026-08-13T03:50:22Z"
+    },
+    "1781474976724.jpg": {
+      "first_backed_up": "2026-08-13T03:50:22Z",
+      "size": 1204645,
+      "in_bucket": true,
+      "last_seen": "2026-08-13T03:50:22Z"
+    }
+  }
+}
