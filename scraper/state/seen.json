@@ -1,5 +1,116 @@
 {
+ "entries": {
+  "189598bd9a0968c7": {
+   "first_seen": "2026-08-12T19:46:06",
+   "last_seen": "2026-08-12T19:46:06",
+   "match_key": "2026-10-31|mac center boys and amp girls club",
+   "outcome": "queued",
+   "phash": "b4ccc3cbc34dcc3e0c3e4d30c4f19ecb4c2791639cb2c991981949a7b37cf936",
+   "source": "webpages",
+   "source_url": "https://nevadasindianterritory.com/events/4577/",
+   "start_date": "2026-10-31",
+   "title": "Nevada Day Powwow"
+  },
+  "1d6127421f645b14": {
+   "first_seen": "2026-08-12T19:46:06",
+   "last_seen": "2026-08-12T19:46:06",
+   "match_key": "2026-09-04|sparks nevada",
+   "outcome": "queued",
+   "phash": "8437738accd852efb16547b88d13236ebf051c71a3c3c5dab8392d16f2e103f1",
+   "source": "webpages",
+   "source_url": "https://nevadasindianterritory.com/events/numaga-indian-days-powwow-handgames-2/",
+   "start_date": "2026-09-04",
+   "title": "2026 Numaga Indian Days Powwow & Handgames"
+  },
+  "3ca5b21582d3faa6": {
+   "first_seen": "2026-08-12T19:46:06",
+   "last_seen": "2026-08-12T19:46:06",
+   "match_key": "2026-09-11|location wadsworth nevada",
+   "outcome": "queued",
+   "phash": null,
+   "source": "webpages",
+   "source_url": "https://nevadasindianterritory.com/events/sacred-visions-powwow/",
+   "start_date": "2026-09-11",
+   "title": "Event Details"
+  },
+  "3dc5882e393fba6f": {
+   "first_seen": "2026-08-12T19:46:06",
+   "last_seen": "2026-08-12T19:46:06",
+   "match_key": "2026-09-04|road reno nevada",
+   "outcome": "queued",
+   "phash": "92dab0fa0d858d050f0b6e79de7a0c342d35c6cbf0c239f033bbb30b66c342de",
+   "source": "webpages",
+   "source_url": "https://nevadasindianterritory.com/events/numaga-indian-days-powwow-handgames-2/",
+   "start_date": "2026-09-04",
+   "title": "Event Details"
+  },
+  "7052cddfe5e01b46": {
+   "first_seen": "2026-08-12T19:46:06",
+   "last_seen": "2026-08-12T19:46:06",
+   "match_key": "2026-10-31|carson city nevada",
+   "outcome": "queued",
+   "phash": "92dab0fa0d858d050f0b6e79de7a0c342d35c6cbf0c239f033bbb30b66c342de",
+   "source": "webpages",
+   "source_url": "https://nevadasindianterritory.com/events/4577/",
+   "start_date": "2026-10-31",
+   "title": "Event Details"
+  },
+  "8c517345197477e5": {
+   "first_seen": "2026-08-12T19:46:06",
+   "last_seen": "2026-08-12T19:46:06",
+   "match_key": "2026-08-15|carson city nevada",
+   "outcome": "queued",
+   "phash": "92dab0fa0d858d050f0b6e79de7a0c342d35c6cbf0c239f033bbb30b66c342de",
+   "source": "webpages",
+   "source_url": "https://nevadasindianterritory.com/events/goshute-annual-pow-wow/",
+   "start_date": "2026-08-15",
+   "title": "2025 Nevada Powwows/Events Calendar"
+  },
+  "99a5bc022a36ef2d": {
+   "first_seen": "2026-08-12T19:46:06",
+   "last_seen": "2026-08-12T19:46:06",
+   "match_key": "2026-09-17|schurz nevada",
+   "outcome": "queued",
+   "phash": "826b444f512b301b2a55eb49aeb24e3e33dd422b3597e0a9caac9db57a352ee8",
+   "source": "webpages",
+   "source_url": "https://nevadasindianterritory.com/events/pinenut-festival/",
+   "start_date": "2026-09-17",
+   "title": "Pinenut Festival"
+  },
+  "b53521d82bfea838": {
+   "first_seen": "2026-08-12T19:46:06",
+   "last_seen": "2026-08-12T19:46:06",
+   "match_key": "2026-09-25|location bishop california",
+   "outcome": "queued",
+   "phash": "92dab0fa0d858d050f0b6e79de7a0c342d35c6cbf0c239f033bbb30b66c342de",
+   "source": "webpages",
+   "source_url": "https://nevadasindianterritory.com/events/bishop-pabanamanina-pow-wow/",
+   "start_date": "2026-09-25",
+   "title": "Event Details"
+  },
+  "be895fe8951f9596": {
+   "first_seen": "2026-08-12T19:46:06",
+   "last_seen": "2026-08-12T19:46:06",
+   "match_key": "2026-09-25|friday california",
+   "outcome": "queued",
+   "phash": "c4540b849a2045bb3778046ce864375a6b3379baff84e04707a8178f587fcfbb",
+   "source": "webpages",
+   "source_url": "https://nevadasindianterritory.com/events/bishop-pabanamanina-pow-wow/",
+   "start_date": "2026-09-25",
+   "title": "Bishop Pabanamanina Pow Wow"
+  },
+  "ff3d1ac82a25fea7": {
+   "first_seen": "2026-08-12T19:46:06",
+   "last_seen": "2026-08-12T19:46:06",
+   "match_key": "2027-05-22|airway heights washington",
+   "outcome": "queued",
+   "phash": "c599b6923ae4c96d25336f0d717b909286846e586b99d9259e6e6c1c639b9696",
+   "source": "webpages",
+   "source_url": "https://spokanetribecasino.com/2026-stick-games/",
+   "start_date": "2027-05-22",
+   "title": "First Annual Stick Game Tournament"
+  }
+ },
  "schema": 1,
- "updated": "2026-08-12T00:00:00",
- "entries": {}
+ "updated": "2026-08-12T19:46:06"
 }

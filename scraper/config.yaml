@@ -129,6 +129,36 @@ sources:
       # list misses entirely.
       - url: https://nevadasindianterritory.com/powwows-calendar/
         hint: powwow handgame stickgame
+
+      # ------------------------------------------------------------------
+      # National powwow calendar, one page per state. These listing pages
+      # score only 0.2-0.3 themselves - they are powwow calendars, and
+      # "powwow" is a support term, not a strong one - so the page-level
+      # gate drops them. That is fine and expected: the value is in the
+      # per-event links below them, where "Stick Game Tournament" actually
+      # appears in the title. Proven on Washington, which turned up the
+      # Legends Casino Pow Wow & Stick Game Tournament and the 80th Annual
+      # Stommish Water Festival - the latter being an event already on the
+      # site, found independently from a source that had never been tried.
+      #
+      # Only the states where handgame is actually played. Adding all fifty
+      # would cost twenty fetches each for nothing.
+      #
+      # Note: calendar.powwows.com/events/?tribe-bar-search=... looks like a
+      # national stickgame search and is not one - the site ignores the
+      # parameter and serves the default list. Its /wp-json/ is robots
+      # blocked, so there is no feed either.
+      - url: https://calendar.powwows.com/events/categories/pow-wows/pow-wows-in-washington/
+      - url: https://calendar.powwows.com/events/categories/pow-wows/pow-wows-in-montana/
+      - url: https://calendar.powwows.com/events/categories/pow-wows/pow-wows-in-idaho/
+      - url: https://calendar.powwows.com/events/categories/pow-wows/pow-wows-in-oregon/
+      - url: https://calendar.powwows.com/events/categories/pow-wows/pow-wows-in-nevada/
+      - url: https://calendar.powwows.com/events/categories/pow-wows/pow-wows-in-california/
+      # Runs its own stickgame tournament; not on any tribal-site list.
+      - url: https://www.puyalluptribe-nsn.gov/
+        tribe: Puyallup
+        location: Tacoma, WA
+        hint: stickgame tournament
       - url: https://www.northernquest.com/entertainment
         location: Airway Heights, WA
         hint: stickgame handgame tournament
