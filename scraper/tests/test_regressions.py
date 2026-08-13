@@ -718,6 +718,57 @@ def test_a_rate_limiting_host_is_dropped_not_retried():
     check("a 500 still retries", f5.session.calls, 3)
 
 
+def test_a_sidecar_note_keeps_the_end_of_a_range():
+    """15. "July 9-12 2026" in a note must not become a one-day event.
+
+    _read_note parsed the date line with find_dates and then threw the end
+    away, so a note written for a four-day tournament produced a single
+    date. Most of these run a long weekend, and the last day is the one
+    people drive home on.
+
+    The note is also the human's answer, so every field it supplies is
+    protected from being overwritten by the flyer reader — end_date now
+    included.
+    """
+    print("\n15. a date range in a sidecar note keeps both ends")
+    import tempfile
+    from handgame_scraper.sources.inbox import InboxSource
+
+    with tempfile.TemporaryDirectory() as tmp:
+        box = Path(tmp)
+        (box / "flyer.jpg").write_bytes(b"\xff\xd8\xff\xe0not-a-real-jpeg")
+        (box / "flyer.txt").write_text(
+            "title: Nespelem Celebration Stickgames\n"
+            "date: July 9-12 2026\n"
+            "location: Nespelem, WA\n"
+            "tribe: Colville\n"
+            "url: https://example.org/post/1\n",
+            encoding="utf-8",
+        )
+        events = [e.tidy() for e in InboxSource(None, {"path": str(box)}).collect()]
+
+    check("the note produced one event", len(events), 1)
+    if not events:
+        return
+    ev = events[0]
+    check("the range starts where it says", ev.start_date, "2026-07-09")
+    check("and ends where it says", ev.end_date, "2026-07-12")
+    check("the typed title is used", ev.title, "Nespelem Celebration Stickgames")
+    check("the typed url beats local://", ev.source_url, "https://example.org/post/1")
+    manual = getattr(ev, "_manual_fields", frozenset())
+    check_true("end_date is protected from the reader too", "end_date" in manual)
+    check_true("as are the other typed fields",
+               {"title", "start_date", "location", "tribe"} <= set(manual))
+
+    # A single date must still work, and must not invent an end.
+    with tempfile.TemporaryDirectory() as tmp:
+        box = Path(tmp)
+        (box / "one.jpg").write_bytes(b"\xff\xd8\xff\xe0x")
+        (box / "one.txt").write_text("date: September 5 2026\n", encoding="utf-8")
+        single = [e.tidy() for e in InboxSource(None, {"path": str(box)}).collect()]
+    check("a single date has no end", single[0].end_date, None)
+
+
 if __name__ == "__main__":
     for fn in [
         test_day_list_is_not_a_year,
@@ -734,6 +785,7 @@ if __name__ == "__main__":
         test_ocr_does_not_outrank_the_flyer_reader,
         test_mirroring_never_costs_us_an_event,
         test_a_rate_limiting_host_is_dropped_not_retried,
+        test_a_sidecar_note_keeps_the_end_of_a_range,
     ]:
         fn()
     print(f"\n  {PASS} passed, {FAIL} failed\n")

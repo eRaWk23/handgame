@@ -77,6 +77,7 @@ class InboxSource(Source):
             title=note.get("title", "") or path.stem.replace("_", " ").replace("-", " "),
             title_provisional=not titled,  # a filename loses to the flyer itself
             start_date=note.get("date"),
+            end_date=note.get("end"),
             location=note.get("location"),
             tribe=note.get("tribe"),
             details=note.get("details"),
@@ -94,6 +95,7 @@ class InboxSource(Source):
             for key, attr in (
                 ("title", "title"),
                 ("date", "start_date"),
+                ("end", "end_date"),
                 ("location", "location"),
                 ("tribe", "tribe"),
                 ("details", "details"),
@@ -118,8 +120,14 @@ class InboxSource(Source):
         except OSError:
             return {}
         if "date" in note:
-            start, _, _ = find_dates(note["date"])
+            # Keep the end of a range. Writing "July 9-12 2026" in a note and
+            # getting a one-day event back loses real information: most of
+            # these tournaments run a long weekend, and the last day is the
+            # one people drive home on.
+            start, end, _ = find_dates(note["date"])
             note["date"] = start.strftime("%Y-%m-%d") if start else ""
+            if end:
+                note.setdefault("end", end.strftime("%Y-%m-%d"))
         return {k: v for k, v in note.items() if v}
 
     # ------------------------------------------------------------------

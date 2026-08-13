@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import sys
 import urllib.parse
 from pathlib import Path
@@ -200,6 +201,134 @@ def cmd_forget(args: argparse.Namespace) -> int:
 
 
 # ----------------------------------------------------------------------
+IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+
+
+def _draft_note(image: bytes) -> tuple[dict[str, str], str]:
+    """Read a flyer and return (fields, how-it-was-read).
+
+    The flyer reader is used when a key is available because it is far better
+    at display type than Tesseract: on five real flyers Tesseract lost two
+    dates and two locations outright and misread a third date by two days.
+    """
+    from handgame_scraper.extract import (
+        find_dates,
+        find_location,
+        find_tribe,
+        guess_title,
+    )
+    from handgame_scraper.ocr import ocr_text, vision_extract
+
+    fields: dict[str, str] = {}
+    text = ocr_text(image) or ""
+    how = "tesseract"
+
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        data = vision_extract(image) or {}
+        if data and data.get("is_handgame") is not False:
+            how = "flyer reader"
+            for key, attr in (
+                ("title", "title"),
+                ("start_date", "date"),
+                ("location", "location"),
+                ("tribe", "tribe"),
+            ):
+                value = data.get(key)
+                if value:
+                    fields[attr] = str(value)
+
+    # Fill whatever the reader did not give us, or everything when there is
+    # no key, from the OCR text.
+    if text:
+        if "date" not in fields:
+            start, _end, _warn = find_dates(text)
+            if start:
+                fields["date"] = start.strftime("%Y-%m-%d")
+        if "location" not in fields:
+            fields["location"] = find_location(text) or ""
+        if "tribe" not in fields:
+            fields["tribe"] = find_tribe(text) or ""
+        if "title" not in fields:
+            fields["title"] = guess_title(text)
+    return {k: v for k, v in fields.items() if v}, how
+
+
+def cmd_intake(args: argparse.Namespace) -> int:
+    """Copy flyers into inbox/ and draft a sidecar note for each.
+
+    The manual path is the one that matters — these events travel by flyer on
+    Facebook, and there is no lawful way to collect them automatically. So the
+    job here is to make the hand path quick: one command, then read four lines
+    and fix whatever is wrong.
+
+    The draft is deliberately a starting point, not an answer. Anything left
+    in the note is treated as human-supplied afterwards and the flyer reader
+    will not overwrite it, which is exactly what you want once you have looked
+    at it — and exactly why it prints what it read for you to check.
+    """
+    inbox = ROOT / "inbox"
+    inbox.mkdir(parents=True, exist_ok=True)
+
+    paths: list[Path] = []
+    for raw in args.files:
+        p = Path(raw).expanduser()
+        if p.is_dir():
+            paths.extend(sorted(q for q in p.iterdir() if q.suffix.lower() in IMAGE_SUFFIXES))
+        elif p.suffix.lower() in IMAGE_SUFFIXES:
+            paths.append(p)
+        else:
+            print(f"  skipped  {p.name}: not an image")
+    if not paths:
+        print("\n  nothing to take in\n")
+        return 1
+    if args.url and len(paths) > 1:
+        raise SystemExit("--url applies to a single flyer; pass one file")
+
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        print("  note: ANTHROPIC_API_KEY is not set, so this is Tesseract only.")
+        print("        Expect display type to come out badly; check every line.\n")
+
+    taken = 0
+    for src in paths:
+        dest = inbox / src.name
+        if dest.exists() and not args.force:
+            print(f"  already in inbox, left alone:  {src.name}")
+            continue
+        image = src.read_bytes()
+        dest.write_bytes(image)
+
+        note_path = dest.with_suffix(".txt")
+        if note_path.exists() and not args.force:
+            print(f"  copied {src.name}; kept the note already beside it")
+            taken += 1
+            continue
+
+        fields, how = _draft_note(image)
+        if args.url:
+            fields["url"] = args.url
+
+        lines = [
+            "Drafted automatically - check every line, then run scrape.",
+            f"Read by {how}.",
+            "",
+        ]
+        for key in ("title", "date", "location", "tribe", "url"):
+            lines.append(f"{key}: {fields.get(key, '')}")
+        note_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        taken += 1
+        print(f"\n  {src.name}  ->  inbox/{dest.name}   (read by {how})")
+        for key in ("title", "date", "location", "tribe"):
+            value = fields.get(key)
+            flag = "" if value else "   <- BLANK, fill this in"
+            print(f"      {key:9s} {value or ''}{flag}")
+
+    print(f"\n  {taken} flyer(s) in inbox/. Correct any line above in the .txt")
+    print("  beside each image, then:  python3 run.py scrape --only inbox\n")
+    return 0
+
+
+# ----------------------------------------------------------------------
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="run.py", description="handgame.info event collector"
@@ -221,6 +350,16 @@ def main(argv: list[str] | None = None) -> int:
         help="keep flyer_url pointing at the original host",
     )
     p_pub.set_defaults(func=cmd_publish)
+
+    p_intake = sub.add_parser(
+        "intake", help="copy flyers into inbox/ and draft a note for each"
+    )
+    p_intake.add_argument("files", nargs="+", help="image files, or a folder of them")
+    p_intake.add_argument("--url", help="where the flyer came from, e.g. the post URL")
+    p_intake.add_argument(
+        "--force", action="store_true", help="overwrite an image or note already there"
+    )
+    p_intake.set_defaults(func=cmd_intake)
 
     p_status = sub.add_parser("status", help="show what the ledger remembers")
     p_status.set_defaults(func=cmd_status)
