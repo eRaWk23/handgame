@@ -1,0 +1,59 @@
+name: Back up event flyers
+
+# Supabase Storage has no undo. Database backups cover only the metadata rows
+# for storage objects, and point-in-time recovery restores the database rather
+# than the files, so a flyer deleted from the bucket is gone for good. Nineteen
+# went that way in a single click on 2026-08-12 and six were unrecoverable.
+#
+# This copies the bucket into the repo, where deleting something is always one
+# `git checkout` away from being undone. It only ever reads from Supabase, and
+# it never deletes a local copy: an object that disappears from the bucket
+# stays here and is marked in flyers/manifest.json.
+
+on:
+  schedule:
+    # 04:00 UTC on Mondays. Nothing here is urgent; weekly is plenty for a
+    # calendar that gains a handful of flyers a month.
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backup-flyers
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install requests
+        run: pip install --quiet "requests>=2.31"
+
+      - name: Copy the bucket into the repo
+        env:
+          # The project URL is public in supabaseClient.js, so the secret is
+          # optional and this falls back to it. SUPABASE_ANON_KEY is already a
+          # repo secret, used by keep-alive.yml.
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://atorftwulkabkmhaeeir.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: python3 scraper/backup_flyers.py
+
+      - name: Commit anything new
+        run: |
+          if [ -z "$(git status --porcelain flyers/)" ]; then
+            echo "No new flyers; nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add flyers/
+          git commit -m "Back up event flyers ($(date -u +%Y-%m-%d))"
+          git push
