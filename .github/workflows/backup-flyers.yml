@@ -12,9 +12,11 @@ name: Back up event flyers
 
 on:
   schedule:
-    # 04:00 UTC on Mondays. Nothing here is urgent; weekly is plenty for a
-    # calendar that gains a handful of flyers a month.
-    - cron: "0 4 * * 1"
+    # 04:00 UTC on the 1st and 15th. Twice a month is the right trade here:
+    # the exposure window is what matters, not the frequency, and a flyer
+    # uploaded through the form is at risk only until the next run picks it
+    # up. Runs cost nothing when nothing changed.
+    - cron: "0 4 1,15 * *"
   workflow_dispatch:
 
 permissions:

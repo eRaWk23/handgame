@@ -1,11 +1,15 @@
 name: Collect handgame events
 
-# Runs on the 1st and 15th of each month at 7am Pacific, and any time you
-# click "Run workflow". Nothing it finds goes live on its own — the run opens
-# a pull request and leaves a review queue for you to approve.
+# Runs on the 1st of each month at 7am Pacific, and any time you click "Run
+# workflow". Nothing it finds goes live on its own — the run opens a pull
+# request and leaves a review queue for you to approve.
+#
+# Monthly rather than fortnightly on purpose: these tournaments are announced
+# weeks or months ahead, the sites carrying them change slowly, and a run that
+# finds nothing new still costs a few minutes of somebody's small web server.
 on:
   schedule:
-    - cron: "0 14 1,15 * *"
+    - cron: "0 14 1 * *"
   workflow_dispatch:
     inputs:
       only:

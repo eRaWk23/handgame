@@ -469,10 +469,31 @@ def test_weekday_contradicts_the_date():
     check("no weekday printed means nothing to check",
           [w for w in warn("September 12-14, 2026") if "flyer says" in w], [])
 
-    # Without a printed year the weekday cannot pick the year, so only a
-    # day that fits no nearby year at all is a real contradiction.
-    check("a correct weekday with no year stays silent",
-          [w for w in warn("Saturday, June 27") if "flyer says" in w], [])
+    # With no printed year we guess the next occurrence. When the weekday
+    # agrees with that guess there is nothing to say.
+    check("a weekday matching the inferred year stays silent",
+          [w for w in warn("Saturday, September 5") if "flyer says" in w], [])
+
+    # But when the weekday fits a *different* nearby year, the guess is
+    # probably wrong, and that is how a stale listing becomes a confident
+    # future date. Found on spokanetribecasino.com/2026-stick-games/, which
+    # prints "FRIDAY | MAY 22" and no year: the next-occurrence rule made it
+    # 2027, a Saturday, when the page plainly described May 2026, a Friday,
+    # which had already happened. Publishing that would have put a finished
+    # event on the calendar a year in the future.
+    stale = warn("FRIDAY | MAY 22")
+    check_true("a weekday fitting another year is flagged",
+               any("flyer says" in w for w in stale))
+    check_true("and the warning names the year that actually fits",
+               any("2026 is a Friday" in w for w in stale))
+    check_true("and says plainly that it looks stale",
+               any("old listing" in w for w in stale))
+
+    # The separator between weekday and date is whatever the page felt like.
+    for sep in ("|", "-", ",", "", "•"):
+        text = f"FRIDAY {sep} MAY 22".replace("  ", " ")
+        check_true(f"separator {sep!r} still pairs them",
+                   any("flyer says" in w for w in warn(text)))
 
     # The warning must name the date that actually got queued.
     start, _end, warnings = find_dates("Monday, June 27", today=TODAY)

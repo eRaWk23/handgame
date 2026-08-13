@@ -212,7 +212,10 @@ def _infer_year(month: int, day: int, today: date) -> int:
 
 
 _WEEKDAY_DATE = re.compile(
-    rf"\b({_WEEKDAY_RE})\b\.?,?\s{{0,3}}"
+    # Flyers and event pages separate the weekday from the date with whatever
+    # they like: "Friday, May 22", "FRIDAY | MAY 22", "Friday - May 22". Only
+    # allowing a comma meant the Spokane casino page slipped through.
+    rf"\b({_WEEKDAY_RE})\b[\s,.|·•–—-]{{0,4}}"
     rf"(?:({_MONTH_RE})\.?\s+(?<!\d)(\d{{1,2}})(?!\d)"
     rf"|(?<!\d)(\d{{1,2}})(?!\d)\s+({_MONTH_RE})\.?\b)"
     rf"\s*,?\s*(?:(?<!\d)(\d{{4}}|'\d{{2}})(?!\d))?",
@@ -251,17 +254,28 @@ def _weekday_conflicts(cleaned: str, today: date) -> list[str]:
             base = _infer_year(month, day, today)
             years = [base - 1, base, base + 1]
 
-        resolved = [d for d in (_safe_date(y, month, day) for y in years) if d]
-        if not resolved or any(d.weekday() == named for d in resolved):
+        resolved = {y: d for y, d in ((y, _safe_date(y, month, day)) for y in years) if d}
+        chosen = resolved.get(base)
+        if not chosen or chosen.weekday() == named:
             continue
-        # Name the year find_dates would settle on, not whichever candidate
-        # happened to sort first, so the warning matches the queued date.
-        actual = _safe_date(base, month, day) or resolved[0]
+
+        said = m.group(1).title()
         note = (
-            f"flyer says {m.group(1).title()} but "
-            f"{actual:%B} {actual.day} {actual.year} is a "
-            f"{_WEEKDAY_NAMES[actual.weekday()]}"
+            f"flyer says {said} but {chosen:%B} {chosen.day} {chosen.year} "
+            f"is a {_WEEKDAY_NAMES[chosen.weekday()]}"
         )
+        # With no printed year we guess the next occurrence. If the weekday
+        # fits a *different* nearby year, that guess is probably wrong — which
+        # is exactly how a stale listing becomes a confident future date. The
+        # Spokane casino page prints "FRIDAY | MAY 22" and no year at all; the
+        # next-occurrence rule made it 2027, a Saturday, when the page plainly
+        # described May 2026, a Friday, which had already happened.
+        fits = [y for y, d in resolved.items() if d.weekday() == named and y != base]
+        if fits:
+            note += (
+                f", and {chosen:%B} {chosen.day} {fits[0]} is a {said} — "
+                "this looks like an old listing, check the year"
+            )
         if note not in out:
             out.append(note)
     return out
