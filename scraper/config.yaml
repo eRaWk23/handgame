@@ -1,0 +1,188 @@
+# handgame.info event collector
+#
+# Add a site: put its home page under sources.calendars.sites AND
+# sources.webpages.sites. The calendar adapter tries the machine-readable
+# feeds first; the webpages adapter is the fallback that reads the HTML.
+#
+# Every site entry can be a bare URL or a block with extra hints:
+#   - url: https://example.org/events
+#     tribe: Colville            # used when the page does not say
+#     location: Nespelem, WA     # used when no city can be found
+#     hint: handgame stickgame   # helps the topic filter on thin pages
+#     follow_links: true         # crawl a few promising internal links
+
+settings:
+  request_delay_seconds: 2.0    # per host; be a good neighbour
+  respect_robots: true
+  cache_ttl_hours: 12
+  cache_dir: .cache
+  output_dir: out
+  ledger_path: state/seen.json
+  min_topic_score: 0.5          # 0-1; raise to cut noise, lower to catch more
+  max_flyers_per_run: 120       # cap on flyer image downloads
+  use_vision_ocr: true          # only active when ANTHROPIC_API_KEY is set
+
+sources:
+
+  # ------------------------------------------------------------------
+  # Machine-readable feeds. Highest quality: exact dates, no guessing.
+  #
+  # 2026-08-12: the original list of 14 was assembled from memory and probed
+  # for the first time. Three sites serve a real feed. The other eleven were
+  # removed - each one cost six requests per run to earn a guaranteed zero,
+  # and two of them (Shoshone-Bannock, Umatilla) burned about half the total
+  # runtime on connection timeouts. They are listed at the bottom of this
+  # section with the reason, so nothing is lost and a re-probe is easy.
+  #
+  # Note on reading a run log: a wp-json probe that returns 200 with an empty
+  # events list logs NOTHING, exactly like a site with no feed. Nez Perce was
+  # pruned once on that mistake. Confirm a feed is absent by requesting the
+  # endpoint directly before removing a site.
+  calendars:
+    enabled: true
+    min_topic_score: 0.45
+    sites:
+      # Confirmed: The Events Calendar iCal, PRODID -//Yakama Nation - ECPv6.
+      - url: https://www.yakama.com
+        tribe: Yakama
+        location: Toppenish, WA
+      # Confirmed: The Events Calendar REST API responds with valid JSON.
+      # Empty at time of writing (total: 0) but live - it will populate.
+      # Was csktribes.org, which 301s here.
+      - url: https://cskt.org
+        tribe: Salish and Kootenai
+        location: Pablo, MT
+      # Confirmed: The Events Calendar REST API responds with valid JSON.
+      # Empty at time of writing (total: 0) but live. Its /events/ page is
+      # JavaScript-rendered, so this feed is the ONLY way to see its events -
+      # do not drop it because the HTML page looks empty.
+      - url: https://nezperce.org
+        tribe: Nez Perce
+        location: Lapwai, ID
+
+    # Removed 2026-08-12, all probed and confirmed. Restore any of these if
+    # the site installs a calendar plugin later.
+    #
+    #   www.powwows.com               robots.txt disallows /wp-json/; no .ics
+    #   www.colvilletribes.com        404 on every feed path
+    #   www.spokanetribe.com          soft-404, serves HTML at 200
+    #   www.shoshonebannocktribes.com host refuses connections on :443
+    #   www.umatilla.nsn.us           domain does not resolve; now ctuir.org
+    #   warmsprings-nsn.gov           soft-404, serves HTML at 200
+    #   www.cdatribe-nsn.gov          404 on every feed path
+    #   kalispeltribe.com             HTTP 500 on /wp-json/tribe/... (plugin
+    #                                 present but erroring - worth re-probing)
+    #   www.blackfeetnation.com       404 on every feed path
+    #   www.muckleshoot.nsn.us        404, and robots.txt disallows .ics
+    #   www.tulaliptribes-nsn.gov     404 on every feed path
+
+  # ------------------------------------------------------------------
+  # HTML fallback. This is where the events actually are: ten of the sites
+  # above are ordinary WordPress with human-readable event pages.
+  # Every URL below was fetched and confirmed to exist on 2026-08-12.
+  webpages:
+    enabled: true
+    max_links_per_site: 20
+    min_topic_score: 0.5
+    sites:
+      - url: https://www.powwows.com/calendar/
+        hint: powwow stickgame handgame
+      - url: https://www.colvilletribes.com/events
+        tribe: Colville
+        location: Nespelem, WA
+      - url: https://www.spokanetribe.com/events/
+        tribe: Spokane
+        location: Wellpinit, WA
+      - url: https://cskt.org/events
+        tribe: Salish and Kootenai
+        location: Pablo, MT
+      - url: https://warmsprings-nsn.gov/events/
+        tribe: Warm Springs
+        location: Warm Springs, OR
+      # HTML view of the same calendar the feed above serves.
+      - url: https://www.yakama.com/events/
+        tribe: Yakama
+        location: Toppenish, WA
+      - url: https://nezperce.org/calendar
+        tribe: Nez Perce
+        location: Lapwai, ID
+      - url: https://www.tulaliptribes-nsn.gov/GeneralServices/Events
+        tribe: Tulalip
+        location: Tulalip, WA
+      # Casinos host a lot of these tournaments.
+      - url: https://www.northernquest.com/entertainment
+        location: Airway Heights, WA
+        hint: stickgame handgame tournament
+      # Was www.12tribescasino.com, which 301s here.
+      - url: https://colvillecasinos.com/casino-events/
+        tribe: Colville
+        location: Omak, WA
+        hint: stickgame handgame tournament
+      - url: https://www.kalispelcasino.com
+        tribe: Kalispel
+        location: Cusick, WA
+        hint: stickgame handgame tournament
+
+    # Removed / not added, checked 2026-08-12:
+    #   www.crazycrow.com/site/powwow-calendar/
+    #                                  404. The site is now a regalia shop with
+    #                                  photo galleries only; no calendar exists
+    #                                  at any of five probed paths.
+    #   ctuir.org/events/              THE ONE THAT GOT AWAY. Replaces the dead
+    #                                  umatilla.nsn.us and is the largest
+    #                                  listing found - the page reports 29
+    #                                  pages of events. It is rendered entirely
+    #                                  in JavaScript: a static fetch returns
+    #                                  804 characters and no events. There is
+    #                                  no feed behind it either - no /wp-json/
+    #                                  root at all, no sitemap.xml, and
+    #                                  ?alttemplate=EventCalendar is JS too.
+    #                                  Reaching it needs a headless browser,
+    #                                  which is a new dependency and a bigger
+    #                                  decision than this file - see HANDOFF.
+    #   www.shoshonebannocktribes.com  host refuses connections on :443
+    #   www.cdatribe-nsn.gov           no public events page in navigation
+    #   www.muckleshoot.nsn.us         events live behind a member portal
+    #   blackfeetnation.com            no events page found in navigation
+
+  # ------------------------------------------------------------------
+  # Needs REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET (free script app).
+  reddit:
+    enabled: true
+    allow_unauthenticated: false
+    timeframe: year
+    limit_per_query: 50
+    queries:
+      - handgame
+      - hand game
+      - stickgame
+      - stick game
+      - bone game
+      - slahal
+    subreddits:
+      - IndianCountry
+      - NativeAmerican
+      - Native_American
+      - indigenous
+      - Montana
+      - Idaho
+      - Spokane
+      - Washington
+      - Oregon
+      - britishcolumbia
+      - Saskatchewan
+
+  # ------------------------------------------------------------------
+  # Finds sites not already on the list above.
+  # Needs BRAVE_SEARCH_API_KEY or SERPER_API_KEY (both have free tiers).
+  websearch:
+    enabled: true
+    results_per_query: 15
+    max_pages: 40
+
+  # ------------------------------------------------------------------
+  # Where Facebook and Instagram flyers come in. Drop images or a
+  # links.txt into scraper/inbox/ and they run through the whole pipeline.
+  inbox:
+    enabled: true
+    path: inbox
