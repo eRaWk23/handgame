@@ -109,7 +109,26 @@ sources:
       - url: https://www.tulaliptribes-nsn.gov/GeneralServices/Events
         tribe: Tulalip
         location: Tulalip, WA
-      # Casinos host a lot of these tournaments.
+      # Casinos host a lot of these tournaments — and this is where they get
+      # announced. Found 2026-08-12 by searching for real tournaments rather
+      # than assuming tribal government sites would carry them: every one of
+      # these scores 1.0 on the topic filter, while the .gov and .nsn.us
+      # homepages score 0.0. Several tribes run a dedicated stickgame page on
+      # the casino site and nothing at all on the tribal site.
+      - url: https://spokanetribecasino.com/2026-stick-games/
+        tribe: Spokane
+        location: Airway Heights, WA
+      - url: https://www.cdacasino.com/events/
+        tribe: Coeur d'Alene
+        location: Worley, ID
+        hint: stickgame tournament
+      - url: https://www.rsic.org/269/Numaga-Indian-Days-Powwow-Handgames
+        tribe: Reno-Sparks Indian Colony
+        location: Reno, NV
+      # Regional aggregator covering the Great Basin, which the tribal-site
+      # list misses entirely.
+      - url: https://nevadasindianterritory.com/powwows-calendar/
+        hint: powwow handgame stickgame
       - url: https://www.northernquest.com/entertainment
         location: Airway Heights, WA
         hint: stickgame handgame tournament
