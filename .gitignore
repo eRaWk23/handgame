@@ -1,0 +1,3 @@
+# macOS writes these into every directory it opens in Finder. They carry no
+# project meaning and had turned up untracked at the repo root and in scraper/.
+.DS_Store
