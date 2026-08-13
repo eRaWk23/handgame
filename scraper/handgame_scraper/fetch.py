@@ -28,6 +28,12 @@ USER_AGENT = (
 # Seconds to wait between requests to the same host.
 DEFAULT_DELAY = 2.0
 
+#: Consecutive 429s from one host before we stop asking it anything else
+#: this run. Three is enough to tell a genuine rate limit from one busy
+#: moment, and cheap enough that a false positive costs one run's worth of
+#: that host rather than anything permanent.
+RATE_LIMIT_GIVE_UP = 3
+
 
 class Fetcher:
     def __init__(
@@ -54,15 +60,55 @@ class Fetcher:
             cache_dir.mkdir(parents=True, exist_ok=True)
         self._last_hit: dict[str, float] = {}
         self._robots: dict[str, Optional[urllib.robotparser.RobotFileParser]] = {}
+        # Per-host rate-limit state. A scheduled run comes from a datacenter
+        # address and gets treated very differently from a laptop: on
+        # 2026-08-13 every single calendar.powwows.com request returned 429
+        # from a GitHub runner while the same URLs returned 200 locally. The
+        # run spent about four minutes backing off and collected 14 candidates
+        # where a local run collected 54. Retrying each URL individually
+        # cannot help when the host is refusing all of them.
+        self._host_delay: dict[str, float] = {}
+        self._host_429: dict[str, int] = {}
+        self._rate_limited: set[str] = set()
 
     # -- politeness ----------------------------------------------------
     def _throttle(self, host: str) -> None:
+        # A host that has answered 429 gets a longer gap for the rest of the
+        # run. This only ever slows us down, never speeds us up.
+        delay = max(self.delay, self._host_delay.get(host, 0.0))
         last = self._last_hit.get(host)
         if last is not None:
-            wait = self.delay - (time.time() - last)
+            wait = delay - (time.time() - last)
             if wait > 0:
                 time.sleep(wait)
         self._last_hit[host] = time.time()
+
+    def _note_rate_limit(self, host: str, retry_after: Optional[str]) -> float:
+        """Record a 429 and return how long to wait before trying again."""
+        seen = self._host_429.get(host, 0) + 1
+        self._host_429[host] = seen
+        # Each 429 doubles this host's floor delay for the rest of the run.
+        self._host_delay[host] = min(30.0, max(self.delay, self._host_delay.get(host, self.delay)) * 2)
+
+        wait = self._host_delay[host]
+        # Retry-After is the host telling us plainly what it wants. Honour it,
+        # but do not sit on a run for an hour because a header said 3600.
+        if retry_after:
+            try:
+                wait = max(wait, min(60.0, float(retry_after)))
+            except ValueError:
+                pass
+
+        if seen >= RATE_LIMIT_GIVE_UP and host not in self._rate_limited:
+            self._rate_limited.add(host)
+            log.warning(
+                "%s has refused %d requests with 429; skipping it for the rest "
+                "of this run. It is rate limiting us, and retrying each URL "
+                "only burns time. Try again later, or from somewhere else.",
+                host,
+                seen,
+            )
+        return wait
 
     def _allowed(self, url: str) -> bool:
         if not self.respect_robots:
@@ -121,6 +167,12 @@ class Fetcher:
             full = f"{url}?{urllib.parse.urlencode(params)}"
 
         host = urllib.parse.urlsplit(url).netloc
+        # A host that has already refused this many requests is not going to
+        # start saying yes to the next one.
+        if host in self._rate_limited:
+            log.debug("skipping %s: %s is rate limiting this run", full, host)
+            return None
+
         last_error: Optional[Exception] = None
         for attempt in range(retries + 1):
             self._throttle(host)
@@ -132,7 +184,22 @@ class Fetcher:
                     timeout=self.timeout,
                     allow_redirects=True,
                 )
-                if resp.status_code == 429 or resp.status_code >= 500:
+                if resp.status_code == 429:
+                    backoff = self._note_rate_limit(
+                        host, resp.headers.get("Retry-After")
+                    )
+                    if host in self._rate_limited:
+                        return None
+                    log.warning(
+                        "%s returned 429, backing off %.1fs (this host has "
+                        "refused %d request(s) so far)",
+                        full,
+                        backoff,
+                        self._host_429.get(host, 1),
+                    )
+                    time.sleep(backoff)
+                    continue
+                if resp.status_code >= 500:
                     backoff = min(30, self.delay * (2 ** (attempt + 1)))
                     log.warning(
                         "%s returned %s, backing off %.1fs",
@@ -142,6 +209,9 @@ class Fetcher:
                     )
                     time.sleep(backoff)
                     continue
+                # Anything that is not a rate limit means the host is talking
+                # to us again, so stop holding its earlier refusals against it.
+                self._host_429.pop(host, None)
                 if resp.status_code >= 400:
                     log.info("%s returned %s", full, resp.status_code)
                     return None

@@ -638,6 +638,86 @@ def test_mirroring_never_costs_us_an_event():
     check("re-publishing maps to the same object", a.calls[0], b.calls[0])
 
 
+def test_a_rate_limiting_host_is_dropped_not_retried():
+    """14. a host that 429s everything must not be retried per URL.
+
+    A scheduled run comes from a datacenter address and is treated very
+    differently from a laptop. On 2026-08-13 every single request to
+    calendar.powwows.com returned 429 from a GitHub runner while the same
+    URLs returned 200 locally. Retries are per URL, so the run worked
+    through the list burning three attempts and two backoffs on each,
+    spent about four minutes on it, and collected 14 candidates where a
+    local run collected 54.
+
+    Retrying cannot help when a host is refusing everything. After three
+    refusals the host is dropped for the rest of the run.
+    """
+    print("\n14. a host that rate limits us is dropped, not retried per URL")
+    from handgame_scraper.fetch import Fetcher, RATE_LIMIT_GIVE_UP
+
+    class Resp:
+        def __init__(self, code, headers=None):
+            self.status_code = code
+            self.headers = headers or {}
+            self.text = ""
+            self.content = b""
+
+    class Seq:
+        """Serves a scripted sequence of status codes, counting real calls."""
+
+        def __init__(self, codes):
+            self.codes = list(codes)
+            self.calls = 0
+
+        def get(self, url, **kw):
+            if url.endswith("/robots.txt"):
+                return Resp(404)
+            code = self.codes[min(self.calls, len(self.codes) - 1)]
+            self.calls += 1
+            return Resp(code)
+
+    def fetcher(codes):
+        f = Fetcher(cache_dir=None, delay=0.0)
+        f.session = Seq(codes)
+        return f
+
+    # Eight URLs on a host that refuses everything: three calls, not 24.
+    f = fetcher([429])
+    for i in range(8):
+        check("every request returns nothing", f.get(f"https://t.example/{i}"), None)
+    check("it stopped after the give-up threshold", f.session.calls, RATE_LIMIT_GIVE_UP)
+    check_true("and the host is marked for the rest of the run",
+               "t.example" in f._rate_limited)
+
+    # Below the threshold it recovers, because one 429 is not a rate limit.
+    f2 = fetcher([429, 200])
+    check_true("one 429 then success still returns the page",
+               f2.get("https://blip.example/a") is not None)
+    check("the refusal count is cleared on success",
+          f2._host_429.get("blip.example"), None)
+    check("and the host is not dropped", "blip.example" in f2._rate_limited, False)
+
+    # One host misbehaving must not affect another.
+    f3 = fetcher([429])
+    for i in range(4):
+        f3.get(f"https://bad.example/{i}")
+    f3.session.codes = [200]
+    check_true("a different host is still fetched",
+               f3.get("https://good.example/ok") is not None)
+
+    # Retry-After is honoured, but must not park a run for an hour.
+    f4 = fetcher([429])
+    check("an hour-long Retry-After is capped",
+          f4._note_rate_limit("h.example", "3600"), 60.0)
+    check_true("a malformed Retry-After does not raise",
+               f4._note_rate_limit("h2.example", "soon") is not None)
+
+    # Server errors are a different thing and still get their retries.
+    f5 = fetcher([500])
+    f5.get("https://slow.example/x")
+    check("a 500 still retries", f5.session.calls, 3)
+
+
 if __name__ == "__main__":
     for fn in [
         test_day_list_is_not_a_year,
@@ -653,6 +733,7 @@ if __name__ == "__main__":
         test_weekday_contradicts_the_date,
         test_ocr_does_not_outrank_the_flyer_reader,
         test_mirroring_never_costs_us_an_event,
+        test_a_rate_limiting_host_is_dropped_not_retried,
     ]:
         fn()
     print(f"\n  {PASS} passed, {FAIL} failed\n")
