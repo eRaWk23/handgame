@@ -8,6 +8,7 @@ Run:  python3 tests/test_regressions.py
 
 from __future__ import annotations
 
+import io
 import sys
 import tempfile
 from datetime import date
@@ -790,6 +791,70 @@ def test_a_sidecar_note_keeps_the_end_of_a_range():
     check("a single date has no end", single[0].end_date, None)
 
 
+def test_cropping_a_screenshot_never_eats_a_flyer():
+    """16. auto-cropping must not slice artwork off a real flyer.
+
+    Flyers saved off Facebook on a phone arrive wrapped in a status bar, an
+    address bar reading facebook.com, a nav bar and black letterboxing, and
+    five of those reached the live calendar looking like that.
+
+    Cropping them automatically is easy to get dangerously wrong. Two
+    earlier attempts here did: one keyed on any flat band and cut 119 rows
+    off the foot of the Kainai flyer, whose artwork simply ends in a dark
+    edge; another cut an image nearly in half. Flyers are normally cropped
+    by hand before they get here, so a missed screenshot is a cosmetic
+    annoyance while a wrong crop destroys the thing itself. The test is
+    therefore weighted the same way: every real flyer must come back
+    byte-identical.
+    """
+    print("\n16. auto-cropping a screenshot never eats a real flyer")
+    from PIL import Image
+    from handgame_scraper.ocr import strip_screenshot_chrome
+
+    def png(im):
+        buf = io.BytesIO()
+        im.save(buf, "PNG")
+        return buf.getvalue()
+
+    # A phone screenshot: coloured chrome slab, flyer, coloured chrome slab.
+    CHROME = (39, 25, 72)  # the real value measured off all five screenshots
+    shot = Image.new("RGB", (600, 1600), CHROME)
+    for y in range(400, 1200):
+        for x in range(0, 600, 7):
+            shot.putpixel((x, y), ((x * 7) % 256, (y * 3) % 256, 90))
+    out, note = strip_screenshot_chrome(png(shot))
+    check_true("a screenshot with chrome is cropped", note is not None)
+    if note:
+        check_true("and the crop lands on the flyer, not the chrome",
+                   Image.open(io.BytesIO(out)).height < 1000)
+
+    # Letterboxing is not chrome. Black and white bands are a flyer's own
+    # matte, and both produced destructive crops before the colour test.
+    for name, band in (("black", (0, 0, 0)), ("white", (255, 255, 255))):
+        art = Image.new("RGB", (600, 1600), band)
+        for y in range(400, 1200):
+            for x in range(0, 600, 7):
+                art.putpixel((x, y), ((x * 5) % 256, (y * 11) % 256, 40))
+        raw = png(art)
+        out, note = strip_screenshot_chrome(raw)
+        check(f"a {name} letterbox is left alone", out, raw)
+
+    # A thin coloured edge is artwork, not a status bar.
+    thin = Image.new("RGB", (600, 1600), (200, 40, 30))
+    for y in range(20, 1580):
+        for x in range(0, 600, 7):
+            thin.putpixel((x, y), ((x * 3) % 256, (y * 7) % 256, 120))
+    raw = png(thin)
+    out, note = strip_screenshot_chrome(raw)
+    check("a thin coloured edge is left alone", out, raw)
+
+    # Anything unreadable comes back untouched rather than raising.
+    junk = b"not an image at all"
+    out, note = strip_screenshot_chrome(junk)
+    check("junk bytes pass straight through", out, junk)
+    check("and report no crop", note, None)
+
+
 if __name__ == "__main__":
     for fn in [
         test_day_list_is_not_a_year,
@@ -807,6 +872,7 @@ if __name__ == "__main__":
         test_mirroring_never_costs_us_an_event,
         test_a_rate_limiting_host_is_dropped_not_retried,
         test_a_sidecar_note_keeps_the_end_of_a_range,
+        test_cropping_a_screenshot_never_eats_a_flyer,
     ]:
         fn()
     print(f"\n  {PASS} passed, {FAIL} failed\n")

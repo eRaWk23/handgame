@@ -26,6 +26,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
 from handgame_scraper.fetch import Fetcher  # noqa: E402
+from handgame_scraper.ocr import strip_screenshot_chrome  # noqa: E402
 from handgame_scraper.ledger import Ledger  # noqa: E402
 from handgame_scraper.models import Event  # noqa: E402
 from handgame_scraper.pipeline import Pipeline  # noqa: E402
@@ -295,6 +296,11 @@ def cmd_intake(args: argparse.Namespace) -> int:
             print(f"  already in inbox, left alone:  {src.name}")
             continue
         image = src.read_bytes()
+        # A flyer saved off Facebook on a phone arrives wrapped in a status
+        # bar, an address bar and a nav bar. Cut them here, once, rather than
+        # letting them reach the calendar — and read the cropped image, so the
+        # reader is not spending attention on browser furniture either.
+        image, cropped = strip_screenshot_chrome(image)
         dest.write_bytes(image)
 
         note_path = dest.with_suffix(".txt")
@@ -318,13 +324,25 @@ def cmd_intake(args: argparse.Namespace) -> int:
 
         taken += 1
         print(f"\n  {src.name}  ->  inbox/{dest.name}   (read by {how})")
+        if cropped:
+            print(f"      {cropped}")
         for key in ("title", "date", "location", "tribe"):
             value = fields.get(key)
             flag = "" if value else "   <- BLANK, fill this in"
             print(f"      {key:9s} {value or ''}{flag}")
 
-    print(f"\n  {taken} flyer(s) in inbox/. Correct any line above in the .txt")
-    print("  beside each image, then:  python3 run.py scrape --only inbox\n")
+    held = len([p for p in inbox.iterdir() if p.suffix.lower() in IMAGE_SUFFIXES])
+    if taken:
+        print(f"\n  {taken} new flyer(s) taken in; {held} now in inbox/ in total.")
+        print("  Correct any line above in the .txt beside each image, then:")
+        print("      python3 run.py scrape --only inbox\n")
+    else:
+        # Saying "0 flyer(s) in inbox/" when six are sitting there reads as a
+        # failure rather than as nothing-new-to-do.
+        print(f"\n  Nothing new. {held} flyer(s) already in inbox/ from an")
+        print("  earlier run. Re-read them with --force, or move the ones you")
+        print("  have finished with into inbox/processed/ so they stop being")
+        print("  read on every scrape.\n")
     return 0
 
 

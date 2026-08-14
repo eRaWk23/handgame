@@ -201,3 +201,124 @@ def vision_extract(
     except Exception as exc:
         log.warning("vision extraction failed: %s", exc)
         return None
+
+
+def _longest_run(flags: list[bool]) -> tuple[int, int]:
+    """Start and end of the longest unbroken stretch of True."""
+    best = (0, 0)
+    start: Optional[int] = None
+    for i, on in enumerate(flags + [False]):
+        if on and start is None:
+            start = i
+        elif not on and start is not None:
+            if i - start > best[1] - best[0]:
+                best = (start, i)
+            start = None
+    return best
+
+
+def strip_screenshot_chrome(image_bytes: bytes) -> tuple[bytes, Optional[str]]:
+    """Cut the phone and browser furniture off a screenshot of a flyer.
+
+    Flyers arrive as phone screenshots far more often than as clean images,
+    because that is how you save one off Facebook. They carry a status bar, an
+    address bar reading facebook.com, a nav bar, black letterboxing, and
+    sometimes a stray UI button — none of which belong on a public calendar.
+
+    Detection is deliberately narrow: a band of rows at the very top or bottom
+    that are each a single flat colour all the way across. Real flyer artwork
+    almost never does that, and designed headers carry type, which breaks the
+    flatness. Nothing is cropped unless such a band is found, so an ordinary
+    photographed or exported flyer passes through untouched.
+
+    Returns (bytes, note). The note is None when nothing was changed.
+    """
+    if not _PIL:
+        return image_bytes, None
+    try:
+        im = Image.open(io.BytesIO(image_bytes))
+        fmt = (im.format or "PNG").upper()
+        im = im.convert("RGB")
+        w, h = im.size
+        if w < 200 or h < 200:
+            return image_bytes, None
+
+        def run_from(y0: int, step: int) -> tuple[int, tuple[int, int, int]]:
+            """How far one edge colour continues, and what that colour is."""
+            edge = im.getpixel((0, y0))
+            n, y = 0, y0
+            while 0 <= y < h:
+                c = im.getpixel((0, y))
+                if any(abs(c[i] - edge[i]) > 12 for i in (0, 1, 2)):
+                    break
+                n += 1
+                y += step
+            return n, edge
+
+        def is_ui_colour(c: tuple[int, int, int]) -> bool:
+            """Chrome is a brand colour. Letterboxing is black or white.
+
+            This is the whole discriminator, and it came from measuring the
+            real files. Every browser band seen so far is (39, 25, 72) — a
+            definite purple. Every false crop in testing was a band of pure
+            black or pure white: a flyer's own letterbox, matte or border.
+            Requiring some actual hue keeps artwork safe, at the cost of
+            missing a browser whose chrome is white or black. Missing one is
+            a screenshot with a status bar on the calendar; the other way
+            round is a flyer with its top sliced off.
+            """
+            return max(c) - min(c) > 25
+
+        # A status bar plus an address bar is a substantial slab — 309 rows,
+        # 12% of the image, on the flyers that prompted this. A thin flat edge
+        # is artwork: the Kainai flyer ends in a 16-row dark band, and an
+        # earlier version of this cut 119 rows off the bottom of it.
+        min_band = max(40, h // 25)
+
+        top, top_colour = run_from(0, 1)
+        if top < min_band or not is_ui_colour(top_colour):
+            return image_bytes, None
+
+        bottom_run, bottom_colour = run_from(h - 1, -1)
+        bottom = h
+        if bottom_run >= min_band and is_ui_colour(bottom_colour):
+            bottom = h - bottom_run
+        if top >= bottom:
+            return image_bytes, None
+
+        body = im.crop((0, top, w, bottom))
+        # Within the page, take the largest solid block of content. That drops
+        # the black letterboxing above and below the image, and also a lone UI
+        # button sitting in the letterbox, which a plain bounding box keeps.
+        mask = body.convert("L").point(lambda v: 255 if v > 14 else 0)
+        bw, bh = mask.size
+        step = 3
+        rows = [
+            sum(1 for x in range(0, bw, step) if mask.getpixel((x, y)))
+            / max(1, bw / step)
+            for y in range(bh)
+        ]
+        y0, y1 = _longest_run([d > 0.05 for d in rows])
+        if y1 - y0 < 50:
+            y0, y1 = 0, bh
+        cols = [
+            sum(1 for y in range(y0, y1, step) if mask.getpixel((x, y)))
+            / max(1, (y1 - y0) / step)
+            for x in range(bw)
+        ]
+        x0, x1 = _longest_run([d > 0.05 for d in cols])
+        if x1 - x0 < 50:
+            x0, x1 = 0, bw
+        out = body.crop((x0, y0, x1, y1))
+
+        # Refuse a crop that ate the flyer. Better to publish a screenshot with
+        # a status bar than a sliver of one.
+        if out.width * out.height < (w * h) * 0.15:
+            return image_bytes, None
+
+        buf = io.BytesIO()
+        out.save(buf, "PNG" if fmt not in ("JPEG", "PNG") else fmt, optimize=True)
+        return buf.getvalue(), f"cropped {w}x{h} screenshot to {out.width}x{out.height}"
+    except Exception as exc:  # noqa: BLE001
+        log.warning("could not crop %s; using it as-is", exc)
+        return image_bytes, None
