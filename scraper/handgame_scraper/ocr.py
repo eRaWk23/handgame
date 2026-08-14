@@ -244,12 +244,21 @@ def strip_screenshot_chrome(image_bytes: bytes) -> tuple[bytes, Optional[str]]:
             return image_bytes, None
 
         def run_from(y0: int, step: int) -> tuple[int, tuple[int, int, int]]:
-            """How far one edge colour continues, and what that colour is."""
+            """How far one edge colour continues, and what that colour is.
+
+            The tolerance is tight on purpose. Chrome is a single flat fill —
+            measured across every screenshot here it runs 309 rows without
+            varying by even one value. Flyer artwork that happens to start on
+            a colour is virtually always a gradient: the Painted Skies flyer
+            opens on sky, which holds for 136 rows at a loose tolerance but
+            only 16 at this one. That difference is what stops the cropper
+            from eating the sky the second time it sees the same flyer.
+            """
             edge = im.getpixel((0, y0))
             n, y = 0, y0
             while 0 <= y < h:
                 c = im.getpixel((0, y))
-                if any(abs(c[i] - edge[i]) > 12 for i in (0, 1, 2)):
+                if any(abs(c[i] - edge[i]) > 2 for i in (0, 1, 2)):
                     break
                 n += 1
                 y += step

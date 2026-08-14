@@ -848,6 +848,25 @@ def test_cropping_a_screenshot_never_eats_a_flyer():
     out, note = strip_screenshot_chrome(raw)
     check("a thin coloured edge is left alone", out, raw)
 
+    # Cropping twice must not crop twice. The Painted Skies flyer opens on a
+    # sky, which held for 136 rows at the original loose colour tolerance and
+    # so read as chrome the second time round: running intake again on an
+    # already-tidy flyer took another 377 rows off it. Chrome is a single flat
+    # fill and holds for 309 rows without varying by one value; a gradient
+    # does not survive a tight tolerance, which is what separates them.
+    gradient = Image.new("RGB", (600, 1600))
+    for y in range(1600):
+        for x in range(600):
+            gradient.putpixel((x, y), (30, 90 + y // 4, 200 - y // 4))
+    raw = png(gradient)
+    out, note = strip_screenshot_chrome(raw)
+    check("a sky gradient is not mistaken for chrome", out, raw)
+
+    once, _ = strip_screenshot_chrome(png(shot))
+    twice, second = strip_screenshot_chrome(once)
+    check("cropping an already-cropped image changes nothing", twice, once)
+    check("and reports no second crop", second, None)
+
     # Anything unreadable comes back untouched rather than raising.
     junk = b"not an image at all"
     out, note = strip_screenshot_chrome(junk)
