@@ -4,6 +4,26 @@ const supabaseUrl = 'https://atorftwulkabkmhaeeir.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0b3JmdHd1bGthYmttaGFlZWlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDk5MTQsImV4cCI6MjA5NDYyNTkxNH0.SW0OdvAZvAh81PqpLkez1MO8WnMruQxMoCitpcd-PMs';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// ─── Escaping ────────────────────────────────────────────
+// Every event field below is submitted through a public, auto-approving form
+// (submission.html) and rendered here with innerHTML. Without escaping, a
+// title of `<img src=x onerror=...>` runs in every visitor's browser on this
+// domain — a stored XSS that could hijack a logged-in admin's session. Escape
+// anything from an event before it touches innerHTML.
+function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
+// A flyer URL ends up in href and src attributes. Allow only http(s): a
+// `javascript:` href would execute on click. Returns '' for anything else,
+// which the callers treat as "no flyer".
+function safeUrl(value) {
+  const s = String(value ?? '').trim();
+  return /^https?:\/\//i.test(s) ? s : '';
+}
+
 // ─── State ───────────────────────────────────────────────
 let currentPage = 1;
 const eventsPerPage = 3;
@@ -197,27 +217,28 @@ function renderEvents(events) {
 
     const alreadyReported = hasReported(event.id);
 
+    const flyer = safeUrl(event.flyer_url);
     div.innerHTML = `
       ${showingPast ? '<span style="background:#3d3028; color:#a89888; padding:2px 8px; border-radius:4px; font-size:0.75rem; float:right;">PAST</span>' : ''}
-      <h3>${event.title}</h3>
+      <h3>${esc(event.title)}</h3>
       <p><strong>Date:</strong> ${dateStr}</p>
       <p><strong>Location:</strong>
-        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}" target="_blank" rel="noopener">
-          ${event.location}
+        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location || '')}" target="_blank" rel="noopener">
+          ${esc(event.location)}
         </a>
       </p>
-      ${event.tribe ? `<p><strong>Tribe / Group:</strong> ${event.tribe}</p>` : ''}
-      ${event.details ? `<p><strong>Details:</strong> ${event.details}</p>` : ''}
-      ${event.flyer_url ? `
-        <a href="${event.flyer_url}" target="_blank" rel="noopener" style="display:block; text-align:center;">
-          <img src="${event.flyer_url}" alt="Event flyer for ${event.title}" class="flyer-preview"
+      ${event.tribe ? `<p><strong>Tribe / Group:</strong> ${esc(event.tribe)}</p>` : ''}
+      ${event.details ? `<p><strong>Details:</strong> ${esc(event.details)}</p>` : ''}
+      ${flyer ? `
+        <a href="${esc(flyer)}" target="_blank" rel="noopener" style="display:block; text-align:center;">
+          <img src="${esc(flyer)}" alt="Event flyer for ${esc(event.title)}" class="flyer-preview"
             style="max-width:250px; border-radius:8px; border:2px solid #3d3028; margin:10px auto; display:block;" />
         </a>
         <p style="font-size:0.8rem; color:#a89888;">Tap flyer to view full size</p>
       ` : '<p><em>No flyer available</em></p>'}
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; flex-wrap:wrap; gap:0.5rem;">
-        <button class="share-btn" data-title="${event.title}" data-id="${event.id}" style="background:none; border:1px solid #3d3028; color:#a89888; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:0.8rem;">📤 Share</button>
-        <button class="report-btn" data-id="${event.id}" style="background:none; border:1px solid #3d3028; color:#a89888; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:0.8rem;" ${alreadyReported ? 'disabled' : ''}>${alreadyReported ? '✓ Reported' : '🚩 Report'}</button>
+        <button class="share-btn" data-title="${esc(event.title)}" data-id="${esc(event.id)}" style="background:none; border:1px solid #3d3028; color:#a89888; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:0.8rem;">📤 Share</button>
+        <button class="report-btn" data-id="${esc(event.id)}" style="background:none; border:1px solid #3d3028; color:#a89888; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:0.8rem;" ${alreadyReported ? 'disabled' : ''}>${alreadyReported ? '✓ Reported' : '🚩 Report'}</button>
       </div>
     `;
 
@@ -380,18 +401,19 @@ function renderCalendar(events) {
           ? `${formatDate(event.start_date)} – ${formatDate(event.end_date)}`
           : formatDate(event.start_date);
 
+        const flyer = safeUrl(event.flyer_url);
         evHtml += `
           <div style="border:1px solid #3d3028; border-left:4px solid #d4723c; border-radius:8px; padding:1rem; margin-bottom:0.75rem; background:#1c1612;">
-            <h4 style="color:#e6a530;">${event.title}</h4>
+            <h4 style="color:#e6a530;">${esc(event.title)}</h4>
             <p><strong>Date:</strong> ${dateStr}</p>
             <p><strong>Location:</strong>
-              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}" target="_blank" rel="noopener" style="color:#3dbead;">${event.location}</a>
+              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location || '')}" target="_blank" rel="noopener" style="color:#3dbead;">${esc(event.location)}</a>
             </p>
-            ${event.tribe ? `<p><strong>Tribe / Group:</strong> ${event.tribe}</p>` : ''}
-            ${event.details ? `<p><strong>Details:</strong> ${event.details}</p>` : ''}
-            ${event.flyer_url ? `
-              <a href="${event.flyer_url}" target="_blank" rel="noopener" style="display:block; text-align:center;">
-                <img src="${event.flyer_url}" alt="Event flyer for ${event.title}"
+            ${event.tribe ? `<p><strong>Tribe / Group:</strong> ${esc(event.tribe)}</p>` : ''}
+            ${event.details ? `<p><strong>Details:</strong> ${esc(event.details)}</p>` : ''}
+            ${flyer ? `
+              <a href="${esc(flyer)}" target="_blank" rel="noopener" style="display:block; text-align:center;">
+                <img src="${esc(flyer)}" alt="Event flyer for ${esc(event.title)}"
                   style="max-width:250px; border-radius:8px; border:2px solid #3d3028; margin:10px auto; display:block;" />
               </a>
               <p style="font-size:0.8rem; color:#a89888; text-align:center;">Tap flyer to view full size</p>

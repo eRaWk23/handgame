@@ -69,6 +69,15 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0b3JmdHd1bGthYmttaGFlZWlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDk5MTQsImV4cCI6MjA5NDYyNTkxNH0.SW0OdvAZvAh81PqpLkez1MO8WnMruQxMoCitpcd-PMs';
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // The preview builds an <img> from a URL the submitter typed. It only ever
+  // runs in their own browser, but a stray quote would still break the markup,
+  // so escape it before it reaches innerHTML.
+  function esc(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+  }
+
   const form         = document.getElementById('event-form');
   const status       = document.getElementById('form-status');
   const flyerInput   = document.getElementById('flyer');
@@ -97,9 +106,9 @@
   function renderPreview(src, alt) {
     flyerPreview.innerHTML = `
       <figure class="flyer-preview-figure">
-        <img src="${src}" alt="${alt}"
+        <img src="${esc(src)}" alt="${esc(alt)}"
           onerror="this.parentElement.innerHTML='<p class=preview-error>Could not load image. Double-check the URL.</p>'" />
-        <figcaption>${alt}</figcaption>
+        <figcaption>${esc(alt)}</figcaption>
       </figure>`;
   }
 
