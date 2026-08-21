@@ -30,6 +30,18 @@
     .filter-btn { padding: 0.4rem 1rem; border-radius: 20px; border: 1px solid #555; background: transparent; color: #ccc; cursor: pointer; }
     .filter-btn.active { background: #ffdb6e; color: #111; border-color: #ffdb6e; font-weight: bold; }
     .report-count { font-size: 0.8rem; color: #f44336; margin-top: 0.25rem; }
+    .edit-btn { background: #ffdb6e; color: #111; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    .edit-btn:hover { background: #ffcf3f; }
+    .edit-form { width: 100%; }
+    .edit-form label { display: block; font-size: 0.8rem; color: #aaa; margin: 0.6rem 0 0.2rem; }
+    .edit-form input, .edit-form textarea { width: 100%; box-sizing: border-box; padding: 0.5rem; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 0.9rem; font-family: inherit; }
+    .edit-form textarea { min-height: 5rem; resize: vertical; }
+    .edit-form .row { display: flex; gap: 0.75rem; }
+    .edit-form .row > div { flex: 1; }
+    .edit-actions { display: flex; gap: 0.5rem; margin-top: 0.9rem; }
+    .save-btn { background: #4caf50; color: #fff; border: none; padding: 0.5rem 1.25rem; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    .save-btn:hover { background: #43a047; }
+    .cancel-btn { background: #555; color: #fff; border: none; padding: 0.5rem 1.25rem; border-radius: 8px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -163,7 +175,7 @@
       const flyer = safeUrl(event.flyer_url);
       const id = esc(event.id);
       return `
-        <div class="admin-event" style="${reports >= 3 ? 'border-left: 3px solid #f44336;' : ''}">
+        <div class="admin-event" data-event-id="${id}" style="${reports >= 3 ? 'border-left: 3px solid #f44336;' : ''}">
           <div>
             <h3>${esc(event.title)} ${badges.join('')}</h3>
             <p><strong>Date:</strong> ${esc(event.start_date)}${event.end_date ? ' – ' + esc(event.end_date) : ''}</p>
@@ -174,6 +186,7 @@
             <p style="font-size:0.75rem; color:#666;">Submitted: ${new Date(event.created_at).toLocaleString()}</p>
           </div>
           <div class="admin-actions">
+            <button class="edit-btn" onclick="editEvent('${id}')">✏️ Edit</button>
             ${!event.approved ? `<button class="approve-btn" onclick="approveEvent('${id}')">✅ Approve</button>` : ''}
             ${reports > 0 ? `<button class="clear-btn" onclick="clearReports('${id}')">🔄 Clear Reports</button>` : ''}
             <button class="delete-btn" onclick="deleteEvent('${id}')">🗑 Delete</button>
@@ -183,24 +196,116 @@
     }).join('');
   }
 
+  // Inline edit. The values are set through the inputs' .value property, never
+  // interpolated into HTML, so nothing an event contains can break out of the
+  // form. The fields on screen are static markup.
+  window.editEvent = (id) => {
+    const ev = allEvents.find(e => e.id === id);
+    const card = document.querySelector(`.admin-event[data-event-id="${id}"]`);
+    if (!ev || !card) return;
+
+    card.innerHTML = `
+      <form class="edit-form" autocomplete="off">
+        <label>Title</label>
+        <input data-field="title" type="text" />
+        <div class="row">
+          <div><label>Start date</label><input data-field="start_date" type="date" /></div>
+          <div><label>End date</label><input data-field="end_date" type="date" /></div>
+        </div>
+        <label>Location</label>
+        <input data-field="location" type="text" />
+        <label>Tribe / group</label>
+        <input data-field="tribe" type="text" />
+        <label>Details</label>
+        <textarea data-field="details"></textarea>
+        <label>Flyer URL (https://…)</label>
+        <input data-field="flyer_url" type="text" />
+        <div class="edit-actions">
+          <button type="submit" class="save-btn">💾 Save</button>
+          <button type="button" class="cancel-btn">Cancel</button>
+        </div>
+      </form>`;
+
+    const set = (f, v) => { card.querySelector(`[data-field="${f}"]`).value = v ?? ''; };
+    set('title', ev.title);
+    set('start_date', ev.start_date);
+    set('end_date', ev.end_date);
+    set('location', ev.location);
+    set('tribe', ev.tribe);
+    set('details', ev.details);
+    set('flyer_url', ev.flyer_url);
+
+    card.querySelector('.cancel-btn').addEventListener('click', renderEvents);
+    card.querySelector('form').addEventListener('submit', e => {
+      e.preventDefault();
+      saveEvent(id, card);
+    });
+    card.querySelector('[data-field="title"]').focus();
+  };
+
+  async function saveEvent(id, card) {
+    const val = f => card.querySelector(`[data-field="${f}"]`).value.trim();
+    const flyer = val('flyer_url');
+    if (flyer && !/^https?:\/\//i.test(flyer)) {
+      alert('Flyer URL must start with http:// or https://, or be left empty.');
+      return;
+    }
+    const payload = {
+      title:      val('title'),
+      start_date: val('start_date'),
+      end_date:   val('end_date') || null,
+      location:   val('location'),
+      tribe:      val('tribe') || null,
+      details:    val('details') || null,
+      flyer_url:  flyer || null,
+    };
+    if (!payload.title || !payload.start_date || !payload.location) {
+      alert('Title, start date and location are required.');
+      return;
+    }
+    if (payload.end_date && payload.end_date < payload.start_date) {
+      alert('End date cannot be before the start date.');
+      return;
+    }
+    const btn = card.querySelector('.save-btn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    if (!(await writeRow(supabase.from('events').update(payload).eq('id', id)))) {
+      btn.disabled = false; btn.textContent = '💾 Save';
+      return;
+    }
+    allEvents = allEvents.map(e => e.id === id ? { ...e, ...payload } : e);
+    renderEvents();
+  }
+
+  // Every admin write goes through here. .select() makes PostgREST return the
+  // rows it actually changed: a row-level-security block comes back as success
+  // with an empty array, not an error, so without this check the screen would
+  // show a change the database refused. Treat zero rows as a failure.
+  async function writeRow(query) {
+    const { data, error } = await query.select();
+    if (error) { alert('Error: ' + error.message); return false; }
+    if (!data || data.length === 0) {
+      alert('Nothing was saved. The database refused the change — you may need to log out and back in.');
+      return false;
+    }
+    return true;
+  }
+
   window.approveEvent = async (id) => {
-    const { error } = await supabase.from('events').update({ approved: true }).eq('id', id);
-    if (error) { alert('Error: ' + error.message); return; }
+    if (!(await writeRow(supabase.from('events').update({ approved: true }).eq('id', id)))) return;
     allEvents = allEvents.map(e => e.id === id ? { ...e, approved: true } : e);
     renderEvents();
   };
 
   window.clearReports = async (id) => {
-    const { error } = await supabase.from('events').update({ report_count: 0 }).eq('id', id);
-    if (error) { alert('Error: ' + error.message); return; }
+    if (!(await writeRow(supabase.from('events').update({ report_count: 0 }).eq('id', id)))) return;
     allEvents = allEvents.map(e => e.id === id ? { ...e, report_count: 0 } : e);
     renderEvents();
   };
 
   window.deleteEvent = async (id) => {
     if (!confirm('Delete this event? This cannot be undone.')) return;
-    const { error } = await supabase.from('events').delete().eq('id', id);
-    if (error) { alert('Error: ' + error.message); return; }
+    if (!(await writeRow(supabase.from('events').delete().eq('id', id)))) return;
     allEvents = allEvents.filter(e => e.id !== id);
     renderEvents();
   };
