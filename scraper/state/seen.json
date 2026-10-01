@@ -11,6 +11,17 @@
    "start_date": "2026-08-21",
    "title": "Chabot's 15th Annual Stickgame Tournament"
   },
+  "12df117475a63b03": {
+   "first_seen": "2026-10-01T19:28:08",
+   "last_seen": "2026-10-01T19:28:08",
+   "match_key": "2026-11-13|coeur d and 8217 alene casino resort hotel worley idaho",
+   "outcome": "queued",
+   "phash": "c0bf2bc22f50c4bd3c3c348cc3cb4b339b4334f470af3941969c4f0ae4bdb0fc",
+   "source": "webpages",
+   "source_url": "https://www.cdacasino.com/event/honoring-our-veterans-stickgame-tournament-2026/",
+   "start_date": "2026-11-13",
+   "title": "Honoring Our Veterans Stickgame Tournament 2026"
+  },
   "189598bd9a0968c7": {
    "first_seen": "2026-08-12T19:46:06",
    "last_seen": "2026-08-12T19:46:06",
@@ -76,6 +87,17 @@
    "source_url": "local://IMG_1327.PNG",
    "start_date": "2026-08-28",
    "title": "Big Island Lake Saskatchewan Pow Wow & Handgames"
+  },
+  "6256f758e871fa75": {
+   "first_seen": "2026-10-01T19:28:08",
+   "last_seen": "2026-10-01T19:28:08",
+   "match_key": "2026-10-01|elko nevada",
+   "outcome": "queued",
+   "phash": null,
+   "source": "webpages",
+   "source_url": "https://nevadasindianterritory.com/events/6th-annual-ruby-valley-treaty-conference/",
+   "start_date": "2026-10-01",
+   "title": "Event Details"
   },
   "6deefec97aac118d": {
    "first_seen": "2026-08-13T20:06:30",
@@ -154,6 +176,17 @@
    "start_date": "2026-09-25",
    "title": "Bishop Pabanamanina Pow Wow"
   },
+  "f5440e991285d7bf": {
+   "first_seen": "2026-10-01T19:28:08",
+   "last_seen": "2026-10-01T19:28:08",
+   "match_key": "2026-10-01|carson city nevada",
+   "outcome": "queued",
+   "phash": "92dab0fa0d858d050f0b6e79de7a0c342d35c6cbf0c239f033bbb30b66c342de",
+   "source": "webpages",
+   "source_url": "https://nevadasindianterritory.com/events/6th-annual-ruby-valley-treaty-conference/",
+   "start_date": "2026-10-01",
+   "title": "2025 Nevada Powwows/Events Calendar"
+  },
   "fe88886767984f2f": {
    "first_seen": "2026-08-13T20:06:31",
    "last_seen": "2026-08-13T20:06:31",
@@ -178,5 +211,5 @@
   }
  },
  "schema": 1,
- "updated": "2026-08-13T20:06:31"
+ "updated": "2026-10-01T19:28:08"
 }
