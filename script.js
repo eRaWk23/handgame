@@ -195,7 +195,10 @@ function renderEvents(events) {
   eventList.innerHTML = "";
 
   if (events.length === 0) {
-    eventList.innerHTML = `<p style="text-align:center; color:#a89888;">${showingPast ? 'No past events found.' : 'No events match your search.'}</p>`;
+    const emptyMessage = searchInput.value
+      ? 'No events match your search.'
+      : showingPast ? 'No past events found.' : 'No upcoming events listed right now.';
+    eventList.innerHTML = `<p style="text-align:center; color:#a89888;">${emptyMessage}</p>`;
     return;
   }
 
