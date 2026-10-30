@@ -42,6 +42,7 @@ DEFAULT_URL = "https://atorftwulkabkmhaeeir.supabase.co"
 ROOT = Path(__file__).resolve().parent.parent
 DEST = ROOT / "flyers"
 MANIFEST = DEST / "manifest.json"
+EVENTS = DEST / "events.json"
 TIMEOUT = 120
 
 
@@ -78,6 +79,29 @@ def list_objects(url: str, key: str) -> list[dict]:
     return [o for o in out if o.get("id")]
 
 
+def backup_events(url: str, key: str, target: Path) -> int:
+    """Write every row of the events table to a JSON file in the repo.
+
+    The rows are the calendar, and nothing else holds a copy of them. Ordered
+    by id so the file only changes when an event does. An empty answer is
+    treated as a failure and never overwrites the last good copy: row-level
+    security and a half-restored project both come back as 200 with no rows.
+    """
+    resp = requests.get(
+        f"{url}/rest/v1/events",
+        headers={"apikey": key, "Authorization": f"Bearer {key}"},
+        params={"select": "*", "order": "id"},
+        timeout=TIMEOUT,
+    )
+    if resp.status_code >= 400:
+        raise SystemExit(f"could not read events: {resp.status_code} {resp.text[:200]}")
+    rows = resp.json()
+    if not rows:
+        raise SystemExit("events came back empty; keeping the last good copy")
+    target.write_text(json.dumps(rows, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return len(rows)
+
+
 def download(url: str, name: str) -> bytes | None:
     resp = requests.get(f"{url}/storage/v1/object/public/{BUCKET}/{name}", timeout=TIMEOUT)
     if resp.status_code >= 400:
@@ -103,6 +127,9 @@ def main() -> int:
             manifest = json.loads(MANIFEST.read_text(encoding="utf-8")).get("objects", {})
         except (ValueError, OSError):
             manifest = {}
+
+    if not args.dry_run:
+        print(f"  {backup_events(url, key, EVENTS)} event row(s) saved to {EVENTS.name}")
 
     objects = list_objects(url, key)
     live = {o["name"] for o in objects}
@@ -152,7 +179,8 @@ def main() -> int:
             encoding="utf-8",
         )
 
-    held = len([p for p in DEST.iterdir() if p.is_file() and p.name != "manifest.json"])
+    not_flyers = {MANIFEST.name, EVENTS.name}
+    held = len([p for p in DEST.iterdir() if p.is_file() and p.name not in not_flyers])
     print(
         f"\n  {added} newly backed up, {skipped} already held, {failed} failed, "
         f"{len(vanished)} newly missing from the bucket"
