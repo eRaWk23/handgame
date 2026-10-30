@@ -49,13 +49,12 @@ Static HTML on GitHub Pages, no build step, Supabase for data and storage.
 `id, title, start_date, end_date, location, tribe, details, flyer_url,
 report_count, approved, created_at`
 
-- `script.js:45-47` fetches with `.select('*')` — **no server-side filter.**
-- `script.js:58` filters client-side: `report_count < REPORT_THRESHOLD` (3).
-  This is the real moderation: **community flags, reactive, not pre-approval.**
-- `admin.html` sets `approved: true` on a row, but **nothing reads `approved`.**
-  It is currently a vestigial column. Do not "fix" this by adding
-  `.eq('approved', true)` to `script.js` without first backfilling every
-  existing row to `approved = true` — otherwise the whole calendar disappears.
+- `script.js` fetches with `.eq('approved', true)`. **A human approves every
+  event in `admin.html` before it reaches the calendar.** Community flags still
+  hide an approved event at `report_count >= REPORT_THRESHOLD` (3).
+- The gate lives in the database, not the page: see the row-level policies on
+  `events`. The public key can insert only with `approved = false` and cannot
+  read unapproved rows, so `run.py publish` lands events under Pending too.
 - Storage bucket for flyers: **`event-flyers`**, public URLs.
 - `submission.html` inserts exactly:
   `{title, start_date, end_date, location, tribe, details, flyer_url}`
@@ -224,25 +223,9 @@ Do not undo these without a reason:
       after people, and "Nixon Memorial Handgame" must not resolve to Nevada.
 - [ ] **No alert when a run finds nothing for several cycles in a row.** That
       is the signature of every source quietly breaking at once.
-- [ ] Consider whether `approved` should become the real gate (see §3), which
-      is a site change, not a collector change. Measured 2026-08-12: **all 11
-      rows are `approved = true`; none are false, none are null.** So the
-      backfill §3 warns about is already satisfied for existing rows, and
-      adding `.eq('approved', true)` to `script.js` today would hide nothing.
-      That is not the whole job, though. `submission.html` inserts without an
-      `approved` key, so what new submissions get depends on the column
-      default, and the default could not be read with the publishable key —
-      the PostgREST schema endpoint requires a secret key. Check it in the
-      dashboard before doing anything, because it decides the order:
-        * default `true`  → the filter is safe but pointless; the gate only
-          becomes real once the default is changed to false, and from that
-          moment every public submission needs an admin action or it never
-          appears. Change the default first, then add the filter.
-        * default `false`/null → **do not add the filter yet.** Every
-          submission since the column was added would already be invisible;
-          backfill those to true first, then add the filter.
-      Getting the order wrong in the second case silently hides real events
-      that are already on the calendar today.
+- [x] `approved` is the real gate (see §3). Every event waits under Pending
+      in `admin.html` until a human approves it. Nothing tells you when one is
+      waiting yet, so check Pending regularly.
 
 ## 8. Commands
 

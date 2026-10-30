@@ -874,6 +874,43 @@ def test_cropping_a_screenshot_never_eats_a_flyer():
     check("and report no crop", note, None)
 
 
+# 18 ------------------------------------------------------------------
+def test_a_pending_insert_does_not_ask_for_the_row_back():
+    """The public key cannot read an unapproved row, so asking for it fails."""
+    print("\n18. an event the key cannot approve still lands, as pending")
+    import handgame_scraper.supabase as sb
+
+    class Resp:
+        def __init__(self, status, body=""):
+            self.status_code = status
+            self.text = body
+
+        def json(self):
+            raise ValueError("no body")
+
+    sent: list[tuple[dict, str]] = []
+
+    def fake_post(url, headers=None, json=None, timeout=None):
+        sent.append((json[0], headers["Prefer"]))
+        if "approved" in json[0]:
+            return Resp(403, "new row violates row-level security policy")
+        if headers["Prefer"] != "return=minimal":
+            return Resp(401, "new row violates row-level security policy")
+        return Resp(201)
+
+    original = sb.requests.post
+    sb.requests.post = fake_post
+    try:
+        result = Supabase(url="https://x.supabase.co", key="k").insert_event(
+            Event(title="T", start_date="2026-12-05", location="Omak, WA"))
+    finally:
+        sb.requests.post = original
+    check("tried approved first, then without", len(sent), 2)
+    check("the retry asks for no row back", sent[1][1], "return=minimal")
+    check("the retry does not send approved", "approved" in sent[1][0], False)
+    check("reported as not approved", result, None)
+
+
 # 17 ------------------------------------------------------------------
 def test_html_entities_do_not_reach_the_calendar():
     """A real location arrived as "Coeur d&#8217;Alene Casino Resort Hotel"."""
@@ -908,6 +945,7 @@ if __name__ == "__main__":
         test_a_sidecar_note_keeps_the_end_of_a_range,
         test_cropping_a_screenshot_never_eats_a_flyer,
         test_html_entities_do_not_reach_the_calendar,
+        test_a_pending_insert_does_not_ask_for_the_row_back,
     ]:
         fn()
     print(f"\n  {PASS} passed, {FAIL} failed\n")

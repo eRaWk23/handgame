@@ -145,7 +145,7 @@ def cmd_publish(args: argparse.Namespace) -> int:
         raise SystemExit("set SUPABASE_URL and SUPABASE_ANON_KEY first")
 
     fetcher = Fetcher(cache_dir=None)
-    added = failed = mirrored = 0
+    added = pending = failed = mirrored = 0
     for row in rows:
         event = Event.from_dict(row)
         try:
@@ -159,16 +159,22 @@ def cmd_publish(args: argparse.Namespace) -> int:
                         mirrored += 1
                 except Exception as exc:  # noqa: BLE001
                     print(f"  note    flyer not mirrored ({exc}); keeping original")
-            supabase.insert_event(event)
-            added += 1
-            print(f"  added   {event.start_date}  {event.title}")
+            inserted = supabase.insert_event(event)
+            if inserted and inserted.get("approved"):
+                added += 1
+                print(f"  added   {event.start_date}  {event.title}")
+            else:
+                pending += 1
+                print(f"  pending {event.start_date}  {event.title}")
         except Exception as exc:  # noqa: BLE001
             # Never abort partway through: a half-published file leaves the
             # user unable to safely re-run it without double-inserting.
             failed += 1
             print(f"  FAILED  {event.title}: {exc}")
     note = f", {mirrored} flyer(s) mirrored" if mirrored else ""
-    print(f"\n  {added} added, {failed} failed{note}\n")
+    print(f"\n  {added} added, {pending} waiting for approval, {failed} failed{note}\n")
+    if pending:
+        print("  Not on the calendar yet. Approve them under Pending in admin.html.\n")
     return 1 if failed else 0
 
 

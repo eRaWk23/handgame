@@ -141,7 +141,11 @@ class Supabase:
         so a human-approved event is marked approved here too. If the column
         is missing, or a row-level policy will not let this key write it, the
         insert is retried without it rather than failing — matching exactly
-        what the public submission form sends.
+        what the public submission form sends. The event then waits under
+        Pending in admin.html, and this returns None.
+
+        The retry asks for no row back. The public key cannot read an
+        unapproved row, and asking for one would fail the whole insert.
         """
         if not self.configured:
             raise SupabaseError("Supabase credentials are not set")
@@ -159,10 +163,11 @@ class Supabase:
 
         last_error = ""
         for index, payload in enumerate(attempts):
+            prefer = "return=representation" if "approved" in payload else "return=minimal"
             try:
                 resp = requests.post(
                     f"{self.url}/rest/v1/{TABLE}",
-                    headers=self._headers({"Prefer": "return=representation"}),
+                    headers=self._headers({"Prefer": prefer}),
                     json=[payload],
                     timeout=self.timeout,
                 )

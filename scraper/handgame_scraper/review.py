@@ -176,9 +176,10 @@ TEMPLATE = """<!DOCTYPE html>
 
 <dialog id="publishDlg">
   <h3>Publish to handgame.info</h3>
-  <p>These go straight into your Supabase <code>events</code> table, the same
-     way the public submission form does. Your key is held in this page only
-     for as long as it is open and is never saved anywhere.</p>
+  <p>These go into your Supabase <code>events</code> table, the same way the
+     public submission form does, and wait under Pending in admin.html until
+     you approve them there. Your key is held in this page only for as long as
+     it is open and is never saved anywhere.</p>
   <input type="text" id="sbUrl" placeholder="https://yourproject.supabase.co">
   <input type="password" id="sbKey" placeholder="Supabase anon / publishable key">
   <div class="log" id="publishLog"></div>
@@ -379,10 +380,11 @@ async function doPublish() {
     });
     try {
       let res = await post({ ...row, approved: true });
+      const live = res.ok;
       if (!res.ok) res = await post(row);
       if (res.ok) {
         done++;
-        log.innerHTML += `<div class="ok">added: ${esc(ev.title)}</div>`;
+        log.innerHTML += `<div class="ok">${live ? 'added' : 'waiting for approval in admin'}: ${esc(ev.title)}</div>`;
         setState(ev._i, 'published');
         document.getElementById('state-' + ev._i).textContent = 'published';
       } else {
