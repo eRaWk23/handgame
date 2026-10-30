@@ -200,12 +200,12 @@
     if (insertError) {
       showStatus(`❌ Submission failed: ${insertError.message}`, 'error');
     } else {
-      showStatus('✅ Event submitted! Redirecting…', 'success');
+      showStatus('✅ Thanks! Your event will appear on the calendar once it has been reviewed. Redirecting…', 'success');
       rlTimes.push(Date.now());
       localStorage.setItem(rlKey, JSON.stringify(rlTimes));
       form.reset();
       flyerPreview.innerHTML = '';
-      setTimeout(() => window.location.href = 'index.html', 2500);
+      setTimeout(() => window.location.href = 'index.html', 5000);
     }
   });
 

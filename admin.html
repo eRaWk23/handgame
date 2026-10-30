@@ -65,7 +65,7 @@
 
     <div class="filter-bar">
       <button class="filter-btn" onclick="setFilter('reported', this)">🚩 Reported</button>
-      <button class="filter-btn" onclick="setFilter('pending', this)">Pending</button>
+      <button class="filter-btn" id="pending-filter" onclick="setFilter('pending', this)">Pending</button>
       <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
     </div>
 
@@ -150,11 +150,18 @@
       return;
     }
     allEvents = data;
-    renderEvents();
+    // Submissions stay off the calendar until approved, so open on them.
+    if (allEvents.some(e => !e.approved)) {
+      window.setFilter('pending', document.getElementById('pending-filter'));
+    } else {
+      renderEvents();
+    }
   }
 
   function renderEvents() {
     const list = document.getElementById('admin-event-list');
+    const pending = allEvents.filter(e => !e.approved).length;
+    document.getElementById('pending-filter').textContent = pending ? `Pending (${pending})` : 'Pending';
     let filtered = allEvents;
     if (currentFilter === 'pending')  filtered = allEvents.filter(e => !e.approved);
     if (currentFilter === 'reported') filtered = allEvents.filter(e => (e.report_count || 0) > 0);

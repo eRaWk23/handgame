@@ -64,6 +64,7 @@ async function loadEvents() {
   const { data, error } = await supabase
     .from('events')
     .select('*')
+    .eq('approved', true)
     .order('start_date', { ascending: true });
 
   if (error) {
