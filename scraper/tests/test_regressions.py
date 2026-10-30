@@ -874,6 +874,21 @@ def test_cropping_a_screenshot_never_eats_a_flyer():
     check("and report no crop", note, None)
 
 
+# 17 ------------------------------------------------------------------
+def test_html_entities_do_not_reach_the_calendar():
+    """A real location arrived as "Coeur d&#8217;Alene Casino Resort Hotel"."""
+    print("\n17. html entities are decoded before an event is stored")
+    ev = Event(title="Rock &amp; Roll Stickgame", start_date="2026-11-13",
+               location="Coeur d&#8217;Alene Casino Resort Hotel, Worley, ID",
+               tribe="Coeur d&#39;Alene", details="Fri &amp; Sat").tidy()
+    check("location", ev.location, "Coeur d’Alene Casino Resort Hotel, Worley, ID")
+    check("title", ev.title, "Rock & Roll Stickgame")
+    check("tribe", ev.tribe, "Coeur d'Alene")
+    check("details", ev.details, "Fri & Sat")
+    check("plain text is unchanged",
+          Event(title="Chabot's 15th", start_date="2026-08-21").tidy().title, "Chabot's 15th")
+
+
 if __name__ == "__main__":
     for fn in [
         test_day_list_is_not_a_year,
@@ -892,6 +907,7 @@ if __name__ == "__main__":
         test_a_rate_limiting_host_is_dropped_not_retried,
         test_a_sidecar_note_keeps_the_end_of_a_range,
         test_cropping_a_screenshot_never_eats_a_flyer,
+        test_html_entities_do_not_reach_the_calendar,
     ]:
         fn()
     print(f"\n  {PASS} passed, {FAIL} failed\n")

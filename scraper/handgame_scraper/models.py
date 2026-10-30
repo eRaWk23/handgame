@@ -11,6 +11,7 @@ layer to get out of sync:
 from __future__ import annotations
 
 import hashlib
+import html
 import json
 import re
 from dataclasses import dataclass, field, asdict
@@ -28,7 +29,10 @@ _WS = re.compile(r"\s+")
 def _clean(text: Optional[str], limit: int = 400) -> Optional[str]:
     if not text:
         return None
-    text = _WS.sub(" ", str(text)).strip(" \t\n\r-–—|•*")
+    # Pages hand over entities like &#8217; and the site escapes on display, so
+    # one left in here reaches the calendar as literal text.
+    text = html.unescape(str(text))
+    text = _WS.sub(" ", text).strip(" \t\n\r-–—|•*")
     return text[:limit] or None
 
 
