@@ -44,6 +44,17 @@
    "start_date": "2026-08-14",
    "title": "Piikani First Nations Annual 2026 Celebration Stickgame Tournament"
   },
+  "3a4c3c916cd70762": {
+   "first_seen": "2026-11-01T19:03:30",
+   "last_seen": "2026-11-01T19:03:30",
+   "match_key": "2026-11-06|veteran s park moapa nevada",
+   "outcome": "queued",
+   "phash": "95f70901710c87bf0bf73ef27810aad03d62f842705f253c16e835ef02fd9fa0",
+   "source": "webpages",
+   "source_url": "https://calendar.powwows.com/events/annual-moapa-river-social-pow-wow/",
+   "start_date": "2026-11-06",
+   "title": "2nd Annual Moapa River Social Pow Wow 2026"
+  },
   "3ca5b21582d3faa6": {
    "first_seen": "2026-08-12T19:46:06",
    "last_seen": "2026-08-12T19:46:06",
@@ -154,6 +165,17 @@
    "start_date": "2026-09-25",
    "title": "Bishop Pabanamanina Pow Wow"
   },
+  "e384b7dfd3e485bc": {
+   "first_seen": "2026-11-01T19:03:30",
+   "last_seen": "2026-11-01T19:03:30",
+   "match_key": "2027-05-16|yakima washington",
+   "outcome": "queued",
+   "phash": "dd23ff2152f002f008402b0a250df7edfbe440f2557af77ffbbd29a705a28302",
+   "source": "webpages",
+   "source_url": "https://calendar.powwows.com/events/legends-casino-pow-wow-stick-game-tournament/",
+   "start_date": "2027-05-16",
+   "title": "Legends Casino Pow Wow & Stick Game Tournament 2025"
+  },
   "fe88886767984f2f": {
    "first_seen": "2026-08-13T20:06:31",
    "last_seen": "2026-08-13T20:06:31",
@@ -178,5 +200,5 @@
   }
  },
  "schema": 1,
- "updated": "2026-08-13T20:06:31"
+ "updated": "2026-11-01T19:03:30"
 }
